@@ -70,10 +70,8 @@
 <script setup lang="ts">
 definePageMeta({
   layout: false,
+  title: "Masuk / Daftar",
 });
-definePageMeta({
-  title: 'Login - Aplikasi Kasir'
-})
 import { ref } from "vue";
 import { useRouter } from "vue-router";
 import { useSupabaseClient } from "#imports";
