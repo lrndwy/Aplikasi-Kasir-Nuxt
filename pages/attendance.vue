@@ -301,7 +301,7 @@
 
     <!-- Edit Attendance Modal (for Admin/Manager) -->
     <Dialog :open="showEditModal" @update:open="showEditModal = $event">
-      <DialogContent class="sm:max-w-[600px] p-6">
+      <DialogContent class="sm:max-w-[600px] p-6 max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Absensi</DialogTitle>
           <DialogDescription>Perbarui detail absensi karyawan.</DialogDescription>

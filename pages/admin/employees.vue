@@ -18,7 +18,7 @@
           <DialogTrigger as-child>
             <Button @click="addNewEmployee">Add New Employee</Button>
           </DialogTrigger>
-          <DialogContent class="sm:max-w-[600px] p-6">
+          <DialogContent class="sm:max-w-[600px] p-6 max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{{
                 isEditingEmployee ? "Edit Employee" : "Add New Employee"

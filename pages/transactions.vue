@@ -180,7 +180,7 @@
 
       <!-- Edit Transaction Dialog -->
       <Dialog :open="isTransactionFormOpen" @update:open="isTransactionFormOpen = $event">
-        <DialogContent class="sm:max-w-[600px] p-6">
+        <DialogContent class="sm:max-w-[600px] p-6 max-h-[80vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>Edit Transaksi</DialogTitle>
             <DialogDescription>Perbarui detail transaksi.</DialogDescription>

@@ -18,7 +18,7 @@
           <DialogTrigger as-child>
             <Button @click="addNewCustomer">Tambah Pelanggan Baru</Button>
           </DialogTrigger>
-          <DialogContent class="sm:max-w-[600px] p-6">
+          <DialogContent class="sm:max-w-[600px] p-6 max-h-[80vh] overflow-y-auto">
             <DialogHeader>
               <DialogTitle>{{
                 isEditing ? "Edit Pelanggan" : "Tambah Pelanggan Baru"
