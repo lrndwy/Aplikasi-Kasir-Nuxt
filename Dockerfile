@@ -12,6 +12,9 @@ RUN yarn install
 # Copy the rest of the application code
 COPY . .
 
+# Set environment variable to disable prerendering during build
+ENV NITRO_PRERENDER=false
+
 # Build the Nuxt.js application
 RUN yarn build
 
