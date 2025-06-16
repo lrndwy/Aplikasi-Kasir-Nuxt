@@ -3,6 +3,7 @@ import tailwindcss from "@tailwindcss/vite";
 export default defineNuxtConfig({
   compatibilityDate: '2025-05-15',
   devtools: { enabled: true },
+  ssr: false, // Disable server-side rendering for production build
   css: ['~/assets/css/main.css'],
   app: {
     head: {
@@ -58,6 +59,11 @@ export default defineNuxtConfig({
         detectSessionInUrl: true
       }
     },
+  },
+  nitro: {
+    prerender: {
+      routes: [] // Disable prerendering
+    }
   },
   colorMode: {
     classSuffix: ''
