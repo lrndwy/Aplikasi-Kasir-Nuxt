@@ -16,97 +16,106 @@
     </div>
 
     <div v-else>
-      <div class="flex gap-4 mb-6">
-        <div>
-          <Label for="categoryFilter" class="mb-2">Filter Kategori</Label>
-          <Select v-model="selectedCategoryId">
-            <SelectTrigger id="categoryFilter" class="bg-white dark:bg-gray-950">
-              <SelectValue
-                :placeholder="
-                  selectedCategoryId === 'all'
-                    ? 'Semua Kategori'
-                    : categories.find((c) => c.id === selectedCategoryId)?.name ||
-                      'Semua Kategori'
-                "
-              />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua Kategori</SelectItem>
-              <SelectItem
-                v-for="category in categories"
-                :key="category.id"
-                :value="category.id"
-              >
-                {{ category.name }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div>
-          <Label for="stockStatus" class="mb-2">Status Stok</Label>
-          <Select v-model="stockStatusFilter">
-            <SelectTrigger id="stockStatus" class="bg-white dark:bg-gray-950">
-              <SelectValue
-                :placeholder="
-                  stockStatusFilter === 'all' ? 'Semua Status' : stockStatusFilter
-                "
-              />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua Status</SelectItem>
-              <SelectItem value="in_stock">Tersedia</SelectItem>
-              <SelectItem value="low_stock">Stok Rendah</SelectItem>
-              <SelectItem value="out_of_stock">Habis</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      <Card class="mb-6">
+        <CardHeader>
+          <CardTitle>Filter Laporan</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <Label for="categoryFilter" class="mb-2">Filter Kategori</Label>
+              <Select v-model="selectedCategoryId">
+                <SelectTrigger id="categoryFilter" class="bg-white dark:bg-gray-950 w-full">
+                  <SelectValue
+                    :placeholder="
+                      selectedCategoryId === 'all'
+                        ? 'Semua Kategori'
+                        : categories.find((c) => c.id === selectedCategoryId)?.name ||
+                          'Semua Kategori'
+                    "
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Kategori</SelectItem>
+                  <SelectItem
+                    v-for="category in categories"
+                    :key="category.id"
+                    :value="category.id"
+                  >
+                    {{ category.name }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label for="stockStatus" class="mb-2">Status Stok</Label>
+              <Select v-model="stockStatusFilter">
+                <SelectTrigger id="stockStatus" class="bg-white dark:bg-gray-950 w-full">
+                  <SelectValue
+                    :placeholder="
+                      stockStatusFilter === 'all' ? 'Semua Status' : stockStatusFilter
+                    "
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Status</SelectItem>
+                  <SelectItem value="in_stock">Tersedia</SelectItem>
+                  <SelectItem value="low_stock">Stok Rendah</SelectItem>
+                  <SelectItem value="out_of_stock">Habis</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       <div v-if="errorMessage" class="text-red-500 text-sm mb-4">
         {{ errorMessage }}
       </div>
 
       <!-- Product Stock Details Table -->
-      <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
-        <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
-          Detail Stok Produk
-        </h2>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Nama Produk</TableHead>
-              <TableHead>Kategori</TableHead>
-              <TableHead>Harga Jual</TableHead>
-              <TableHead>Stok</TableHead>
-              <TableHead>Stok Minimum</TableHead>
-              <TableHead>Status Stok</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow v-for="product in filteredProducts" :key="product.id">
-              <TableCell>{{ product.name }}</TableCell>
-              <TableCell>{{
-                categories.find((c) => c.id === product.category_id)?.name || "N/A"
-              }}</TableCell>
-              <TableCell>{{ formatCurrency(product.price) }}</TableCell>
-              <TableCell>{{ product.stock }}</TableCell>
-              <TableCell>{{ product.min_stock }}</TableCell>
-              <TableCell>
-                <Badge :variant="getStockStatusVariant(product.stock, product.min_stock)">
-                  {{ getStockStatus(product.stock, product.min_stock) }}
-                </Badge>
-              </TableCell>
-            </TableRow>
-            <TableRow v-if="filteredProducts.length === 0 && !loading">
-              <TableCell colspan="6" class="text-center text-gray-500 dark:text-gray-400">
-                Tidak ada data stok produk untuk kriteria ini.
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-        <div v-if="loading" class="text-center text-gray-500 dark:text-gray-400 mt-4">
-          Memuat data stok produk...
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Detail Stok Produk</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>Nama Produk</TableHead>
+                <TableHead>Kategori</TableHead>
+                <TableHead>Harga Jual</TableHead>
+                <TableHead>Stok</TableHead>
+                <TableHead>Stok Minimum</TableHead>
+                <TableHead>Status Stok</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow v-for="product in filteredProducts" :key="product.id">
+                <TableCell>{{ product.name }}</TableCell>
+                <TableCell>{{
+                  categories.find((c) => c.id === product.category_id)?.name || "N/A"
+                }}</TableCell>
+                <TableCell>{{ formatCurrency(product.price) }}</TableCell>
+                <TableCell>{{ product.stock }}</TableCell>
+                <TableCell>{{ product.min_stock }}</TableCell>
+                <TableCell>
+                  <Badge :variant="getStockStatusVariant(product.stock, product.min_stock)">
+                    {{ getStockStatus(product.stock, product.min_stock) }}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+              <TableRow v-if="filteredProducts.length === 0 && !loading">
+                <TableCell colspan="6" class="text-center text-gray-500 dark:text-gray-400">
+                  Tidak ada data stok produk untuk kriteria ini.
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+          <div v-if="loading" class="text-center text-gray-500 dark:text-gray-400 mt-4">
+            Memuat data stok produk...
+          </div>
+        </CardContent>
+      </Card>
     </div>
   </div>
 </template>
@@ -133,6 +142,7 @@ import {
   TableRow,
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Product {
   id: string;

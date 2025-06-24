@@ -1,6 +1,6 @@
 <template>
-  <div class="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
-    <h1 class="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+  <div class="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900 p-2 sm:p-4">
+    <h1 class="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-900 dark:text-white">
       Manajemen Kategori Produk
     </h1>
 
@@ -54,27 +54,32 @@
                 />
               </div>
               <div class="flex items-center space-x-2">
-                <Checkbox id="isActive" v-model:checked="categoryForm.is_active" />
+                <Checkbox id="isActive" v-model="categoryForm.is_active" />
                 <Label for="isActive">Aktif</Label>
               </div>
-              <div v-if="errorMessage" class="text-red-500 text-sm mt-4">
-                {{ errorMessage }}
-              </div>
-              <div v-if="successMessage" class="text-green-500 text-sm mt-4">
-                {{ successMessage }}
-              </div>
-              <DialogFooter>
-                <Button type="submit" :disabled="loading">
+              <DialogFooter class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 pt-4">
+                <DialogClose as-child>
+                  <Button type="button" variant="outline" @click="cancelEdit"
+                    class="w-full sm:w-auto mb-2 sm:mb-0"
+                    >Batal</Button
+                  >
+                </DialogClose>
+                <Button
+                  v-if="isEditing"
+                  type="button"
+                  variant="destructive"
+                  @click="confirmDeleteCategory(categoryForm.id)"
+                  :disabled="loading"
+                  class="w-full sm:w-auto mb-2 sm:mb-0"
+                >
+                  Hapus Kategori
+                </Button>
+                <Button type="submit" :disabled="loading" class="w-full sm:w-auto">
                   <span v-if="loading">Menyimpan...</span>
                   <span v-else>{{
                     isEditing ? "Perbarui Kategori" : "Tambah Kategori"
                   }}</span>
                 </Button>
-                <DialogClose as-child>
-                  <Button type="button" variant="outline" @click="cancelEdit"
-                    >Batal</Button
-                  >
-                </DialogClose>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -82,53 +87,68 @@
       </div>
 
       <!-- Daftar Kategori -->
-      <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
-        <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
-          Daftar Kategori
-        </h2>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead class="min-w-[150px]">Nama</TableHead>
-              <TableHead class="min-w-[200px]">Deskripsi</TableHead>
-              <TableHead class="min-w-[80px]">Aktif</TableHead>
-              <TableHead class="min-w-[150px]">Dibuat Pada</TableHead>
-              <TableHead class="min-w-[150px]">Diperbarui Pada</TableHead>
-              <TableHead class="min-w-[150px]">Aksi</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow v-for="category in categories" :key="category.id">
-              <TableCell>{{ category.name }}</TableCell>
-              <TableCell>{{ category.description }}</TableCell>
-              <TableCell>{{ category.is_active ? "Ya" : "Tidak" }}</TableCell>
-              <TableCell>{{ formatDate(category.created_at) }}</TableCell>
-              <TableCell>{{ formatDate(category.updated_at) }}</TableCell>
-              <TableCell>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  @click="editCategory(category)"
-                  class="mr-2"
-                  >Edit</Button
-                >
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  @click="confirmDeleteCategory(category.id)"
-                  >Hapus</Button
-                >
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-        <div
-          v-if="categories.length === 0 && !loading"
-          class="text-center text-gray-500 dark:text-gray-400 mt-4"
-        >
-          Tidak ada kategori ditemukan.
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Daftar Kategori</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead class="min-w-[150px]">Nama</TableHead>
+                  <TableHead class="min-w-[200px] hidden md:table-cell">Deskripsi</TableHead>
+                  <TableHead class="min-w-[80px]">Aktif</TableHead>
+                  <TableHead class="min-w-[150px] hidden md:table-cell">Dibuat Pada</TableHead>
+                  <TableHead class="min-w-[150px] hidden md:table-cell">Diperbarui Pada</TableHead>
+                  <TableHead class="min-w-[150px]">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow v-for="category in categories" :key="category.id" @click="showCategoryDetail(category)" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <TableCell>{{ category.name }}</TableCell>
+                  <TableCell class="hidden md:table-cell">{{ category.description }}</TableCell>
+                  <TableCell>
+                    <Badge :variant="category.is_active ? 'success' : 'destructive'">
+                      {{ category.is_active ? "Aktif" : "Tidak Aktif" }}
+                    </Badge>
+                  </TableCell>
+                  <TableCell class="hidden md:table-cell">{{ formatDate(category.created_at) }}</TableCell>
+                  <TableCell class="hidden md:table-cell">{{ formatDate(category.updated_at) }}</TableCell>
+                  <TableCell @click.stop>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger as-child>
+                        <Button variant="ghost" class="h-8 w-8 p-0">
+                          <span class="sr-only">Open menu</span>
+                          <MoreHorizontal class="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                        <DropdownMenuItem @click="showCategoryDetail(category)">
+                          <Info class="mr-2 h-4 w-4" />Detail
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @click="editCategory(category)">
+                          <Edit class="mr-2 h-4 w-4" />Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @click="confirmDeleteCategory(category.id)">
+                          <Trash2 class="mr-2 h-4 w-4" />Hapus
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+          <div
+            v-if="categories.length === 0 && !loading"
+            class="text-center text-gray-500 dark:text-gray-400 mt-4"
+          >
+            Tidak ada kategori ditemukan.
+          </div>
+        </CardContent>
+      </Card>
 
       <!-- Delete Confirmation Dialog -->
       <Dialog :open="isConfirmDeleteOpen" @update:open="isConfirmDeleteOpen = $event">
@@ -153,7 +173,52 @@
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      <!-- Category Detail Dialog -->
+      <Dialog :open="isCategoryDetailOpen" @update:open="isCategoryDetailOpen = $event">
+        <DialogContent class="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Detail Kategori</DialogTitle>
+            <DialogDescription>Informasi lengkap mengenai kategori ini.</DialogDescription>
+          </DialogHeader>
+          <div v-if="selectedCategory" class="grid gap-4 py-4">
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailName" class="text-right">Nama</Label>
+              <Input id="detailName" :model-value="selectedCategory.name" readonly class="col-span-3" />
+            </div>
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailDescription" class="text-right">Deskripsi</Label>
+              <Textarea id="detailDescription" :model-value="selectedCategory.description || 'Tidak ada deskripsi'" readonly class="col-span-3" />
+            </div>
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailIsActive" class="text-right">Aktif</Label>
+              <div class="col-span-3">
+                <Badge :variant="selectedCategory.is_active ? 'success' : 'destructive'">
+                  {{ selectedCategory.is_active ? "Aktif" : "Tidak Aktif" }}
+                </Badge>
+              </div>
+            </div>
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailCreatedAt" class="text-right">Dibuat Pada</Label>
+              <Input id="detailCreatedAt" :model-value="formatDate(selectedCategory.created_at)" readonly class="col-span-3" />
+            </div>
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailUpdatedAt" class="text-right">Diperbarui Pada</Label>
+              <Input id="detailUpdatedAt" :model-value="formatDate(selectedCategory.updated_at)" readonly class="col-span-3" />
+            </div>
+          </div>
+          <DialogFooter>
+            <DialogClose as-child>
+              <Button type="button" variant="outline">Tutup</Button>
+            </DialogClose>
+            <Button @click="editCategory(selectedCategory!)">
+              <Edit class="mr-2 h-4 w-4" />Edit Kategori
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
+    <Toaster />
   </div>
 </template>
 
@@ -161,21 +226,25 @@
 definePageMeta({
   title: 'Categories - Aplikasi Kasir'
 })
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch } from "vue";
 import { useSupabaseClient, useSupabaseUser } from "#imports";
+import { toast } from 'vue-sonner';
+import { Toaster } from '@/components/ui/sonner';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import 'vue-sonner/style.css'
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Dialog,
   DialogContent,
@@ -186,6 +255,14 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, Edit, Trash2, Info } from "lucide-vue-next";
 
 interface Category {
   id: string;
@@ -209,16 +286,15 @@ const categoryForm = ref({
 const pageLoading = ref(true); // New ref for overall page loading
 const isEditing = ref(false);
 const loading = ref(false);
-const errorMessage = ref("");
-const successMessage = ref("");
 const hasAdminOrManagerRole = ref(false);
 const isCategoryFormOpen = ref(false); // Controls the add/edit category dialog
 const isConfirmDeleteOpen = ref(false); // Controls the delete confirmation dialog
 const categoryToDeleteId = ref<string | null>(null); // Stores the ID of the category to be deleted
+const isCategoryDetailOpen = ref(false); // Controls the category detail dialog
+const selectedCategory = ref<Category | null>(null); // Stores the selected category for detail view
 
 const fetchCategories = async () => {
   loading.value = true;
-  errorMessage.value = "";
   try {
     const { data, error } = await supabase
       .from("categories")
@@ -228,7 +304,9 @@ const fetchCategories = async () => {
     if (error) throw error;
     categories.value = data as Category[];
   } catch (error: any) {
-    errorMessage.value = error.message;
+    toast.error("Gagal memuat kategori!", {
+      description: error.message,
+    });
   } finally {
     loading.value = false;
   }
@@ -246,20 +324,27 @@ const checkUserRole = async () => {
     .single();
 
   if (error) {
-    console.error("Error fetching user role:", error.message);
+    toast.error("Gagal memeriksa peran pengguna!", {
+      description: error.message,
+    });
     hasAdminOrManagerRole.value = false;
     return;
   }
-  hasAdminOrManagerRole.value = data.role === "admin" || data.role === "manager";
+  if (!data) {
+    toast.error("Data profil pengguna tidak ditemukan.");
+    hasAdminOrManagerRole.value = false;
+    return;
+  }
+  hasAdminOrManagerRole.value = data?.role === "admin" || data?.role === "manager";
   if (!hasAdminOrManagerRole.value) {
-    errorMessage.value = "Anda tidak memiliki izin untuk mengakses halaman ini.";
+    toast.warning("Anda tidak memiliki izin untuk mengakses halaman ini.", {
+      description: "Silakan hubungi administrator untuk mendapatkan akses.",
+    });
   }
 };
 
 const saveCategory = async () => {
   loading.value = true;
-  errorMessage.value = "";
-  successMessage.value = "";
   try {
     if (isEditing.value) {
       const { error } = await supabase
@@ -272,7 +357,9 @@ const saveCategory = async () => {
         })
         .eq("id", categoryForm.value.id);
       if (error) throw error;
-      successMessage.value = "Kategori berhasil diperbarui!";
+      toast.success("Kategori berhasil diperbarui!", {
+        description: `Kategori ${categoryForm.value.name} telah berhasil diperbarui.`,
+      });
     } else {
       const { error } = await supabase.from("categories").insert({
         name: categoryForm.value.name,
@@ -280,12 +367,17 @@ const saveCategory = async () => {
         is_active: categoryForm.value.is_active,
       });
       if (error) throw error;
-      successMessage.value = "Kategori berhasil ditambahkan!";
+      toast.success("Kategori berhasil ditambahkan!", {
+        description: `Kategori ${categoryForm.value.name} telah berhasil ditambahkan.`,
+      });
     }
     resetForm();
     await fetchCategories();
+    isCategoryFormOpen.value = false; // Close the dialog on success
   } catch (error: any) {
-    errorMessage.value = error.message;
+    toast.error("Gagal menyimpan kategori!", {
+      description: error.message,
+    });
   } finally {
     loading.value = false;
   }
@@ -299,9 +391,13 @@ const addNewCategory = () => {
 const editCategory = (category: Category) => {
   isEditing.value = true;
   categoryForm.value = { ...category };
-  errorMessage.value = "";
-  successMessage.value = "";
   isCategoryFormOpen.value = true; // Open the dialog for editing
+  isCategoryDetailOpen.value = false; // Close detail dialog if open
+};
+
+const showCategoryDetail = (category: Category) => {
+  selectedCategory.value = category;
+  isCategoryDetailOpen.value = true;
 };
 
 const cancelEdit = () => {
@@ -311,6 +407,7 @@ const cancelEdit = () => {
 
 const confirmDeleteCategory = (id: string) => {
   categoryToDeleteId.value = id;
+  isCategoryFormOpen.value = false; // Close the category form dialog
   isConfirmDeleteOpen.value = true;
 };
 
@@ -318,20 +415,23 @@ const deleteCategoryConfirmed = async () => {
   if (!categoryToDeleteId.value) return;
 
   loading.value = true;
-  errorMessage.value = "";
-  successMessage.value = "";
   try {
     const { error } = await supabase
       .from("categories")
       .delete()
       .eq("id", categoryToDeleteId.value);
     if (error) throw error;
-    successMessage.value = "Kategori berhasil dihapus!";
-    await fetchCategories();
+    loading.value = false; // Set loading to false before closing dialog
     isConfirmDeleteOpen.value = false; // Close the confirmation dialog
     categoryToDeleteId.value = null; // Clear the ID
+    toast.success("Kategori berhasil dihapus!", {
+      description: "Kategori telah berhasil dihapus dari daftar.",
+    });
+    await fetchCategories();
   } catch (error: any) {
-    errorMessage.value = error.message;
+    toast.error("Gagal menghapus kategori!", {
+      description: error.message,
+    });
   } finally {
     loading.value = false;
   }
@@ -348,21 +448,23 @@ const resetForm = () => {
 };
 
 onMounted(async () => {
-  pageLoading.value = true; // Start loading
+  pageLoading.value = true; // Start loading state
   try {
     await checkUserRole();
     if (hasAdminOrManagerRole.value) {
       await fetchCategories();
     }
+  } catch (error: any) {
+    toast.error("Terjadi kesalahan saat memuat data awal!", {
+      description: error.message,
+    });
   } finally {
-    pageLoading.value = false; // End loading
+    pageLoading.value = false; // End loading state
   }
 });
 
 watch(user, async (newUser) => {
   if (newUser) {
-    // No need to set pageLoading here, as this watch is for reactive changes after initial load
-    // The initial load is handled by onMounted
     await checkUserRole();
     if (hasAdminOrManagerRole.value) {
       await fetchCategories();

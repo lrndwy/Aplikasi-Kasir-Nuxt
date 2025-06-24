@@ -16,200 +16,210 @@
     </div>
 
     <div v-else>
-      <div class="flex gap-4 mb-6">
-        <div>
-          <Label for="reportType" class="mb-2">Tipe Laporan</Label>
-          <Select v-model="reportType">
-            <SelectTrigger id="reportType" class="bg-white dark:bg-gray-950">
-              <SelectValue :placeholder="reportType" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="daily">Harian</SelectItem>
-              <SelectItem value="weekly">Mingguan</SelectItem>
-              <SelectItem value="monthly">Bulanan</SelectItem>
-              <SelectItem value="custom">Kustom</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-        <div v-if="reportType === 'custom'">
-          <Label for="startDate" class="mb-2">Tanggal Mulai</Label>
-          <Popover>
-            <PopoverTrigger as-child>
-              <Button
-                variant="outline"
-                :class="
-                  cn(
-                    'w-[280px] justify-start text-left font-normal',
-                    !startDateValue && 'text-muted-foreground'
-                  )
-                "
-              >
-                <CalendarIcon class="mr-2 h-4 w-4" />
-                {{
-                  startDateValue
-                    ? df.format(startDateValue.toDate(getLocalTimeZone()))
-                    : "Pick a date"
-                }}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent class="w-auto p-0">
-              <Calendar v-model="startDateValue" initial-focus />
-            </PopoverContent>
-          </Popover>
-        </div>
-        <div v-if="reportType === 'custom'">
-          <Label for="endDate" class="mb-2">Tanggal Akhir</Label>
-          <Popover>
-            <PopoverTrigger as-child>
-              <Button
-                variant="outline"
-                :class="
-                  cn(
-                    'w-[280px] justify-start text-left font-normal',
-                    !endDateValue && 'text-muted-foreground'
-                  )
-                "
-              >
-                <CalendarIcon class="mr-2 h-4 w-4" />
-                {{
-                  endDateValue
-                    ? df.format(endDateValue.toDate(getLocalTimeZone()))
-                    : "Pick a date"
-                }}
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent class="w-auto p-0">
-              <Calendar v-model="endDateValue" initial-focus />
-            </PopoverContent>
-          </Popover>
-        </div>
-        <div>
-          <Label for="cashierFilter" class="mb-2">Filter Kasir</Label>
-          <Select v-model="selectedCashierId">
-            <SelectTrigger id="cashierFilter" class="bg-white dark:bg-gray-950">
-              <SelectValue
-                :placeholder="
-                  selectedCashierId
-                    ? cashiers.find((c) => c.id === selectedCashierId)?.full_name
-                    : 'Semua Kasir'
-                "
-              />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Semua Kasir</SelectItem>
-              <SelectItem
-                v-for="cashier in cashiers"
-                :key="cashier.id"
-                :value="cashier.id"
-              >
-                {{ cashier.full_name }}
-              </SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
-      </div>
+      <Card class="mb-6">
+        <CardHeader>
+          <CardTitle>Filter Laporan</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+            <div>
+              <Label for="reportType" class="mb-2">Tipe Laporan</Label>
+              <Select v-model="reportType">
+                <SelectTrigger id="reportType" class="bg-white dark:bg-gray-950 w-full">
+                  <SelectValue :placeholder="reportType" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="daily">Harian</SelectItem>
+                  <SelectItem value="weekly">Mingguan</SelectItem>
+                  <SelectItem value="monthly">Bulanan</SelectItem>
+                  <SelectItem value="custom">Kustom</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div v-if="reportType === 'custom'">
+              <Label for="startDate" class="mb-2">Tanggal Mulai</Label>
+              <Popover>
+                <PopoverTrigger as-child class="hover:bg-white">
+                  <Button
+                    variant="outline"
+                    :class="
+                      cn(
+                        'w-full justify-start text-left font-normal',
+                        !startDateValue && 'text-muted-foreground'
+                      )
+                    "
+                  >
+                    <CalendarIcon class="mr-2 h-4 w-4" />
+                    {{
+                      startDateValue
+                        ? df.format(startDateValue.toDate(getLocalTimeZone()))
+                        : "Pilih tanggal"
+                    }}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent class="w-auto p-0">
+                  <Calendar v-model="startDateValue" initial-focus />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div v-if="reportType === 'custom'">
+              <Label for="endDate" class="mb-2">Tanggal Akhir</Label>
+              <Popover>
+                <PopoverTrigger as-child class="hover:bg-white">
+                  <Button
+                    variant="outline"
+                    :class="
+                      cn(
+                        'w-full justify-start text-left font-normal',
+                        !endDateValue && 'text-muted-foreground'
+                      )
+                    "
+                  >
+                    <CalendarIcon class="mr-2 h-4 w-4" />
+                    {{
+                      endDateValue
+                        ? df.format(endDateValue.toDate(getLocalTimeZone()))
+                        : "Pilih tanggal"
+                    }}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent class="w-auto p-0">
+                  <Calendar v-model="endDateValue" initial-focus />
+                </PopoverContent>
+              </Popover>
+            </div>
+            <div>
+              <Label for="cashierFilter" class="mb-2">Filter Kasir</Label>
+              <Select v-model="selectedCashierId">
+                <SelectTrigger id="cashierFilter" class="bg-white dark:bg-gray-950 w-full">
+                  <SelectValue
+                    :placeholder="
+                      selectedCashierId
+                        ? cashiers.find((c) => c.id === selectedCashierId)?.full_name
+                        : 'Semua Kasir'
+                    "
+                  />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Semua Kasir</SelectItem>
+                  <SelectItem
+                    v-for="cashier in cashiers"
+                    :key="cashier.id"
+                    :value="cashier.id"
+                  >
+                    {{ cashier.full_name }}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+        </CardContent>
+      </Card>
       <div v-if="errorMessage" class="text-red-500 text-sm mb-4">
         {{ errorMessage }}
       </div>
 
       <!-- Sales Summary -->
-      <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6">
-        <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
-          Ringkasan Penjualan
-        </h2>
-        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div class="border dark:border-gray-700 rounded-lg p-4">
-            <p class="text-gray-600 dark:text-gray-400">Total Penjualan Bruto</p>
-            <p class="text-xl font-bold text-green-600 dark:text-green-400">
-              {{ formatCurrency(salesSummary.totalGrossSales) }}
-            </p>
+      <Card class="mb-6">
+        <CardHeader>
+          <CardTitle>Ringkasan Penjualan</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div class="border dark:border-gray-700 rounded-lg p-4">
+              <p class="text-gray-600 dark:text-gray-400">Total Penjualan Bruto</p>
+              <p class="text-xl font-bold text-green-600 dark:text-green-400">
+                {{ formatCurrency(salesSummary.totalGrossSales) }}
+              </p>
+            </div>
+            <div class="border dark:border-gray-700 rounded-lg p-4">
+              <p class="text-gray-600 dark:text-gray-400">Total Diskon</p>
+              <p class="text-xl font-bold text-red-600 dark:text-red-400">
+                {{ formatCurrency(salesSummary.totalDiscount) }}
+              </p>
+            </div>
+            <div class="border dark:border-gray-700 rounded-lg p-4">
+              <p class="text-gray-600 dark:text-gray-400">Total Pajak</p>
+              <p class="text-xl font-bold text-blue-600 dark:text-blue-400">
+                {{ formatCurrency(salesSummary.totalTax) }}
+              </p>
+            </div>
+            <div class="border dark:border-gray-700 rounded-lg p-4">
+              <p class="text-gray-600 dark:text-gray-400">Total Penjualan Bersih</p>
+              <p class="text-xl font-bold text-green-600 dark:text-green-400">
+                {{ formatCurrency(salesSummary.totalNetSales) }}
+              </p>
+            </div>
+            <div class="border dark:border-gray-700 rounded-lg p-4">
+              <p class="text-gray-600 dark:text-gray-400">Jumlah Transaksi</p>
+              <p class="text-xl font-bold text-gray-900 dark:text-white">
+                {{ salesSummary.transactionCount }}
+              </p>
+            </div>
+            <div class="border dark:border-gray-700 rounded-lg p-4">
+              <p class="text-gray-600 dark:text-gray-400">Rata-rata Transaksi</p>
+              <p class="text-xl font-bold text-gray-900 dark:text-white">
+                {{ formatCurrency(salesSummary.averageTransaction) }}
+              </p>
+            </div>
           </div>
-          <div class="border dark:border-gray-700 rounded-lg p-4">
-            <p class="text-gray-600 dark:text-gray-400">Total Diskon</p>
-            <p class="text-xl font-bold text-red-600 dark:text-red-400">
-              {{ formatCurrency(salesSummary.totalDiscount) }}
-            </p>
-          </div>
-          <div class="border dark:border-gray-700 rounded-lg p-4">
-            <p class="text-gray-600 dark:text-gray-400">Total Pajak</p>
-            <p class="text-xl font-bold text-blue-600 dark:text-blue-400">
-              {{ formatCurrency(salesSummary.totalTax) }}
-            </p>
-          </div>
-          <div class="border dark:border-gray-700 rounded-lg p-4">
-            <p class="text-gray-600 dark:text-gray-400">Total Penjualan Bersih</p>
-            <p class="text-xl font-bold text-green-600 dark:text-green-400">
-              {{ formatCurrency(salesSummary.totalNetSales) }}
-            </p>
-          </div>
-          <div class="border dark:border-gray-700 rounded-lg p-4">
-            <p class="text-gray-600 dark:text-gray-400">Jumlah Transaksi</p>
-            <p class="text-xl font-bold text-gray-900 dark:text-white">
-              {{ salesSummary.transactionCount }}
-            </p>
-          </div>
-          <div class="border dark:border-gray-700 rounded-lg p-4">
-            <p class="text-gray-600 dark:text-gray-400">Rata-rata Transaksi</p>
-            <p class="text-xl font-bold text-gray-900 dark:text-white">
-              {{ formatCurrency(salesSummary.averageTransaction) }}
-            </p>
-          </div>
-        </div>
-      </div>
+        </CardContent>
+      </Card>
 
       <!-- Sales Chart -->
-      <div
-        v-if="salesChartData.labels.length > 0"
-        class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6 mb-6"
-      >
-        <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
-          Grafik Penjualan
-        </h2>
-        <div class="h-80">
-          <BarChart :chart-data="salesChartData" />
-        </div>
-      </div>
+      <Card v-if="salesChartData.labels.length > 0" class="mb-6">
+        <CardHeader>
+          <CardTitle>Grafik Penjualan</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="h-80">
+            <BarChart :chart-data="salesChartData" />
+          </div>
+        </CardContent>
+      </Card>
 
       <!-- Sales Details Table -->
-      <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
-        <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
-          Detail Penjualan
-        </h2>
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>No. Transaksi</TableHead>
-              <TableHead>Tanggal</TableHead>
-              <TableHead>Kasir</TableHead>
-              <TableHead>Pelanggan</TableHead>
-              <TableHead>Total Akhir</TableHead>
-              <TableHead>Status</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow v-for="transaction in salesData" :key="transaction.id">
-              <TableCell>{{ transaction.transaction_number }}</TableCell>
-              <TableCell>{{ formatDate(transaction.created_at) }}</TableCell>
-              <TableCell>{{ transaction.cashier_name || "N/A" }}</TableCell>
-              <TableCell>{{ transaction.customer_name || "Umum" }}</TableCell>
-              <TableCell>{{ formatCurrency(transaction.final_amount) }}</TableCell>
-              <TableCell>
-                <Badge :variant="getStatusVariant(transaction.payment_status)">
-                  {{ transaction.payment_status }}
-                </Badge>
-              </TableCell>
-            </TableRow>
-            <TableRow v-if="salesData.length === 0 && !loading">
-              <TableCell colspan="6" class="text-center text-gray-500 dark:text-gray-400">
-                Tidak ada data penjualan untuk periode ini.
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-        <div v-if="loading" class="text-center text-gray-500 dark:text-gray-400 mt-4">
-          Memuat data penjualan...
-        </div>
-      </div>
+      <Card>
+        <CardHeader>
+          <CardTitle>Detail Penjualan</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <Table>
+            <TableHeader>
+              <TableRow>
+                <TableHead>No. Transaksi</TableHead>
+                <TableHead>Tanggal</TableHead>
+                <TableHead>Kasir</TableHead>
+                <TableHead>Pelanggan</TableHead>
+                <TableHead>Total Akhir</TableHead>
+                <TableHead>Status</TableHead>
+              </TableRow>
+            </TableHeader>
+            <TableBody>
+              <TableRow v-for="transaction in salesData" :key="transaction.id">
+                <TableCell>{{ transaction.transaction_number }}</TableCell>
+                <TableCell>{{ formatDate(transaction.created_at) }}</TableCell>
+                <TableCell>{{ transaction.cashier_name || "N/A" }}</TableCell>
+                <TableCell>{{ transaction.customer_name || "Umum" }}</TableCell>
+                <TableCell>{{ formatCurrency(transaction.final_amount) }}</TableCell>
+                <TableCell>
+                  <Badge :variant="getStatusVariant(transaction.payment_status)">
+                    {{ transaction.payment_status }}
+                  </Badge>
+                </TableCell>
+              </TableRow>
+              <TableRow v-if="salesData.length === 0 && !loading">
+                <TableCell colspan="6" class="text-center text-gray-500 dark:text-gray-400">
+                  Tidak ada data penjualan untuk periode ini.
+                </TableCell>
+              </TableRow>
+            </TableBody>
+          </Table>
+          <div v-if="loading" class="text-center text-gray-500 dark:text-gray-400 mt-4">
+            Memuat data penjualan...
+          </div>
+        </CardContent>
+      </Card>
     </div>
   </div>
 </template>
@@ -246,6 +256,7 @@ import {
 } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
 import BarChart from "@/components/ui/chart/BarChart.vue";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Transaction {
   id: string;

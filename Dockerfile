@@ -4,10 +4,10 @@ FROM node:20-alpine AS builder
 WORKDIR /app
 
 # Copy package.json and package-lock.json (or yarn.lock)
-COPY package.json yarn.lock ./
+COPY package.json ./
 
 # Install dependencies
-RUN yarn install
+RUN npm install
 
 # Copy the rest of the application code
 COPY . .
@@ -16,7 +16,7 @@ COPY . .
 ENV NITRO_PRERENDER=false
 
 # Build the Nuxt.js application
-RUN yarn build
+RUN npm run build
 
 # Stage 2: Serve the Nuxt.js application
 FROM node:20-alpine

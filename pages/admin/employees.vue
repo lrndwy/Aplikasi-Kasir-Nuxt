@@ -1,203 +1,166 @@
 <template>
-  <div class="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
-    <h1 class="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
-      Employee Management
+  <div class="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900 p-2 sm:p-4">
+    <h1 class="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-900 dark:text-white">
+      Manajemen Karyawan
     </h1>
 
     <div v-if="pageLoading" class="flex justify-center items-center h-64">
       <div class="spinner"></div>
     </div>
 
-    <div v-else-if="!hasAdminRole" class="text-center text-red-500 dark:text-red-400">
+    <div
+      v-else-if="!hasAdminRole"
+      class="text-center text-red-500 dark:text-red-400"
+    >
       Anda tidak memiliki izin untuk mengakses halaman ini.
     </div>
 
     <div v-else>
-      <div class="mb-6 flex justify-end">
-        <Dialog :open="isEmployeeFormOpen" @update:open="isEmployeeFormOpen = $event">
-          <DialogTrigger as-child>
-            <Button @click="addNewEmployee">Add New Employee</Button>
-          </DialogTrigger>
-          <DialogContent class="sm:max-w-[600px] p-6 max-h-[80vh] overflow-y-auto">
-            <DialogHeader>
-              <DialogTitle>{{
-                isEditingEmployee ? "Edit Employee" : "Add New Employee"
-              }}</DialogTitle>
-              <DialogDescription>
-                {{
-                  isEditingEmployee
-                    ? "Update employee details."
-                    : "Add a new employee to the list."
-                }}
-              </DialogDescription>
-            </DialogHeader>
-            <form @submit.prevent="saveEmployee" class="space-y-4 py-4">
-              <div>
-                <Label for="employeeEmail" class="mb-2">Email</Label>
-                <Input
-                  id="employeeEmail"
-                  v-model="employeeForm.email"
-                  type="email"
-                  :disabled="isEditingEmployee"
-                  required
-                />
-              </div>
-              <div>
-                <Label for="employeeFullName" class="mb-2">Full Name</Label>
-                <Input
-                  id="employeeFullName"
-                  v-model="employeeForm.full_name"
-                  type="text"
-                />
-              </div>
-              <div v-if="!isEditingEmployee">
-                <Label for="employeePassword" class="mb-2">Password</Label>
-                <Input
-                  id="employeePassword"
-                  v-model="employeeForm.password"
-                  type="password"
-                  required
-                />
-              </div>
-              <div>
-                <Label for="employeeRole" class="mb-2">Role</Label>
-                <Select v-model="employeeForm.role">
-                  <SelectTrigger>
-                    <SelectValue placeholder="Select a role" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectGroup>
-                      <SelectItem value="cashier">Cashier</SelectItem>
-                      <SelectItem value="manager">Manager</SelectItem>
-                      <SelectItem value="admin">Admin</SelectItem>
-                    </SelectGroup>
-                  </SelectContent>
-                </Select>
-              </div>
-              <div>
-                <Label for="employeePhone" class="mb-2">Phone</Label>
-                <Input id="employeePhone" v-model="employeeForm.phone" type="text" />
-              </div>
-              <div>
-                <Label for="employeeAddress" class="mb-2">Address</Label>
-                <Textarea id="employeeAddress" v-model="employeeForm.address" />
-              </div>
-              <div class="flex items-center space-x-2">
-                <Checkbox id="employeeIsActive" v-model="employeeForm.is_active" />
-                <Label for="employeeIsActive">Active</Label>
-              </div>
-              <div
-                v-if="addEmployeeMessage"
-                :class="{
-                  'text-green-500': !addEmployeeError,
-                  'text-red-500': addEmployeeError,
-                }"
-                class="text-sm mt-2"
-              >
-                {{ addEmployeeMessage }}
-              </div>
-              <DialogFooter>
-                <Button type="submit" :disabled="loadingAddEmployee">
-                  <span v-if="loadingAddEmployee">Saving...</span>
-                  <span v-else>{{
-                    isEditingEmployee ? "Update Employee" : "Add Employee"
-                  }}</span>
-                </Button>
-                <DialogClose as-child>
-                  <Button type="button" variant="outline" @click="cancelEditEmployee"
-                    >Cancel</Button
-                  >
-                </DialogClose>
-              </DialogFooter>
-            </form>
-          </DialogContent>
-        </Dialog>
-      </div>
 
-      <div class="bg-white dark:bg-gray-800 p-6 rounded-lg shadow-md">
-        <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
-          Employee List
-        </h2>
-        <div v-if="loadingEmployees" class="text-center text-gray-500 dark:text-gray-400">
-          Loading employees...
-        </div>
-        <div
-          v-else-if="employees.length === 0"
-          class="text-center text-gray-500 dark:text-gray-400"
-        >
-          No employees found.
-        </div>
-        <Table v-else>
-          <TableHeader>
-            <TableRow>
-              <TableHead>Email</TableHead>
-              <TableHead>Full Name</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead>Phone</TableHead>
-              <TableHead>Address</TableHead>
-              <TableHead>Active</TableHead>
-              <TableHead>Actions</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <TableRow v-for="employee in employees" :key="employee.id">
-              <TableCell>{{ employee.email }}</TableCell>
-              <TableCell>{{ employee.full_name }}</TableCell>
-              <TableCell>{{ employee.role }}</TableCell>
-              <TableCell>{{ employee.phone }}</TableCell>
-              <TableCell>{{ employee.address }}</TableCell>
-              <TableCell>{{ employee.is_active ? "Ya" : "Tidak" }}</TableCell>
-              <TableCell>
-                <Button @click="editEmployee(employee)" size="sm" class="mr-2"
-                  >Edit</Button
-                >
-                <Button
-                  @click="confirmDeleteEmployee(employee.id)"
-                  size="sm"
-                  variant="destructive"
-                  >Delete</Button
-                >
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-      </div>
+      <!-- Daftar Karyawan -->
+      <Card>
+        <CardHeader>
+          <CardTitle>Daftar Karyawan</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="overflow-x-auto">
+            <Table>
+              <TableHeader>
+                <TableRow>
+                  <TableHead class="min-w-[150px]">Email</TableHead>
+                  <TableHead class="min-w-[200px] hidden md:table-cell">Nama Lengkap</TableHead>
+                  <TableHead class="min-w-[80px]">Peran</TableHead>
+                  <TableHead class="min-w-[150px] hidden lg:table-cell">Telepon</TableHead>
+                  <TableHead class="min-w-[200px] hidden xl:table-cell">Alamat</TableHead>
+                  <TableHead class="min-w-[80px]">Aktif</TableHead>
+                  <TableHead class="min-w-[150px] hidden md:table-cell">Dibuat Pada</TableHead>
+                  <TableHead class="min-w-[150px] hidden md:table-cell">Diperbarui Pada</TableHead>
+                  <TableHead class="min-w-[150px]">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow v-for="employee in employees" :key="employee.id" @click="showEmployeeDetail(employee)" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <TableCell>{{ employee.email }}</TableCell>
+                  <TableCell class="hidden md:table-cell">{{ employee.full_name }}</TableCell>
+                  <TableCell>{{ employee.role }}</TableCell>
+                  <TableCell class="hidden lg:table-cell">{{ employee.phone || '-' }}</TableCell>
+                  <TableCell class="hidden xl:table-cell">{{ employee.address || '-' }}</TableCell>
+                  <TableCell>
+                    <Badge :variant="employee.is_active ? 'success' : 'destructive'">
+                      {{ employee.is_active ? "Ya" : "Tidak" }}
+                    </Badge>
+                  </TableCell>
+                  <TableCell class="hidden md:table-cell">{{ formatDate(employee.created_at) }}</TableCell>
+                  <TableCell class="hidden md:table-cell">{{ formatDate(employee.updated_at) }}</TableCell>
+                  <TableCell @click.stop>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger as-child>
+                        <Button variant="ghost" class="h-8 w-8 p-0">
+                          <span class="sr-only">Open menu</span>
+                          <MoreHorizontal class="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                        <DropdownMenuItem @click="showEmployeeDetail(employee)">
+                          <Info class="mr-2 h-4 w-4" />Detail
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @click="editEmployee(employee)">
+                          <Edit class="mr-2 h-4 w-4" />Edit
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+          <div
+            v-if="employees.length === 0 && !loadingEmployees"
+            class="text-center text-gray-500 dark:text-gray-400 mt-4"
+          >
+            Tidak ada karyawan ditemukan.
+          </div>
+        </CardContent>
+      </Card>
 
-      <!-- Delete Confirmation Dialog -->
-      <Dialog :open="isConfirmDeleteOpen" @update:open="isConfirmDeleteOpen = $event">
-        <DialogContent>
+
+      <!-- Employee Detail Dialog -->
+      <Dialog :open="isEmployeeDetailOpen" @update:open="isEmployeeDetailOpen = $event">
+        <DialogContent class="sm:max-w-[425px]">
           <DialogHeader>
-            <DialogTitle>Confirm Delete Employee</DialogTitle>
-            <DialogDescription>
-              Are you sure you want to delete this employee? This action cannot be undone.
-            </DialogDescription>
+            <DialogTitle>Detail Karyawan</DialogTitle>
+            <DialogDescription>Informasi lengkap mengenai karyawan ini.</DialogDescription>
           </DialogHeader>
+          <div v-if="selectedEmployee" class="grid gap-4 py-4">
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailEmail" class="text-right">Email</Label>
+              <Input id="detailEmail" :model-value="selectedEmployee.email" readonly class="col-span-3" />
+            </div>
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailFullName" class="text-right">Nama Lengkap</Label>
+              <Input id="detailFullName" :model-value="selectedEmployee.full_name || 'Tidak ada nama lengkap'" readonly class="col-span-3" />
+            </div>
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailRole" class="text-right">Peran</Label>
+              <Input id="detailRole" :model-value="selectedEmployee.role" readonly class="col-span-3" />
+            </div>
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailPhone" class="text-right">Telepon</Label>
+              <Input id="detailPhone" :model-value="selectedEmployee.phone || 'Tidak ada nomor telepon'" readonly class="col-span-3" />
+            </div>
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailAddress" class="text-right">Alamat</Label>
+              <Textarea id="detailAddress" :model-value="selectedEmployee.address || 'Tidak ada alamat'" readonly class="col-span-3" />
+            </div>
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailIsActive" class="text-right">Aktif</Label>
+              <div class="col-span-3">
+                <Badge :variant="selectedEmployee.is_active ? 'success' : 'destructive'">
+                  {{ selectedEmployee.is_active ? "Ya" : "Tidak" }}
+                </Badge>
+              </div>
+            </div>
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailCreatedAt" class="text-right">Dibuat Pada</Label>
+              <Input id="detailCreatedAt" :model-value="formatDate(selectedEmployee.created_at)" readonly class="col-span-3" />
+            </div>
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailUpdatedAt" class="text-right">Diperbarui Pada</Label>
+              <Input id="detailUpdatedAt" :model-value="formatDate(selectedEmployee.updated_at)" readonly class="col-span-3" />
+            </div>
+          </div>
           <DialogFooter>
-            <Button variant="outline" @click="isConfirmDeleteOpen = false">Cancel</Button>
-            <Button
-              variant="destructive"
-              @click="deleteEmployeeConfirmed"
-              :disabled="loadingAddEmployee"
-            >
-              <span v-if="loadingAddEmployee">Deleting...</span>
-              <span v-else>Delete</span>
+            <DialogClose as-child>
+              <Button type="button" variant="outline">Tutup</Button>
+            </DialogClose>
+            <Button @click="editEmployee(selectedEmployee!)">
+              <Edit class="mr-2 h-4 w-4" />Edit Karyawan
             </Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
     </div>
+    <Toaster />
   </div>
 </template>
 
 <script setup lang="ts">
+definePageMeta({
+  title: 'Employees - Aplikasi Kasir'
+})
 import { ref, onMounted, watch } from "vue";
 import { useRouter } from "vue-router";
 import { useSupabaseClient, useSupabaseUser } from "#imports";
+import { toast } from 'vue-sonner';
+import { Toaster } from '@/components/ui/sonner';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import 'vue-sonner/style.css';
 import {
   Select,
   SelectContent,
@@ -224,6 +187,20 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
+import { MoreHorizontal, Edit, Info } from "lucide-vue-next";
 import type { User } from "@supabase/supabase-js";
 
 interface UserProfile {
@@ -245,9 +222,7 @@ const router = useRouter();
 const userProfile = ref<UserProfile | null>(null);
 const employees = ref<UserProfile[]>([]);
 const loadingEmployees = ref(true);
-const loadingAddEmployee = ref(false);
-const addEmployeeMessage = ref("");
-const addEmployeeError = ref(false);
+const loading = ref(false); // Renamed from loadingAddEmployee
 
 const isEmployeeFormOpen = ref(false); // Controls the add/edit employee dialog
 const isEditingEmployee = ref(false); // True if editing an existing employee, false if adding new
@@ -255,14 +230,13 @@ const employeeForm = ref({
   id: "",
   email: "",
   full_name: "",
-  password: "",
   role: "cashier" as "admin" | "manager" | "cashier",
   phone: "",
   address: "",
   is_active: true,
 });
-const employeeToDeleteId = ref<string | null>(null); // Stores the ID of the employee to be deleted
-const isConfirmDeleteOpen = ref(false); // Controls the delete confirmation dialog
+const isEmployeeDetailOpen = ref(false); // Controls the employee detail dialog
+const selectedEmployee = ref<UserProfile | null>(null); // Stores the selected employee for detail view
 
 const fetchUserProfile = async (userId: string) => {
   const { data, error } = await supabase
@@ -281,97 +255,68 @@ const fetchUserProfile = async (userId: string) => {
 
 const fetchEmployees = async () => {
   loadingEmployees.value = true;
-  const { data, error } = await supabase
-    .from("profiles")
-    .select("*")
-    .order("created_at", { ascending: false });
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("*")
+      .order("created_at", { ascending: false });
 
-  if (error) {
-    console.error("Error fetching employees:", error.message);
-  } else {
+    if (error) throw error;
     employees.value = data as UserProfile[];
-    console.log("Fetched employees:", employees.value); // Log fetched data
+  } catch (error: any) {
+    toast.error("Gagal memuat data karyawan!", {
+      description: error.message,
+    });
+  } finally {
+    loadingEmployees.value = false;
   }
-  loadingEmployees.value = false;
 };
 
 const saveEmployee = async () => {
-  loadingAddEmployee.value = true;
-  addEmployeeMessage.value = "";
-  addEmployeeError.value = false;
-
+  loading.value = true;
   try {
-    if (isEditingEmployee.value) {
-      console.log("Attempting to update employee:", employeeForm.value); // Log before update
-      // Update existing employee
-      const { error } = await supabase
-        .from("profiles")
-        .update({
-          full_name: employeeForm.value.full_name,
-          phone: employeeForm.value.phone,
-          address: employeeForm.value.address,
-          role: employeeForm.value.role,
-          is_active: employeeForm.value.is_active,
-        })
-        .eq("id", employeeForm.value.id);
+    const { error } = await supabase
+      .from("profiles")
+      .update({
+        full_name: employeeForm.value.full_name,
+        phone: employeeForm.value.phone,
+        address: employeeForm.value.address,
+        role: employeeForm.value.role,
+        is_active: employeeForm.value.is_active,
+        updated_at: new Date().toISOString(), // Add updated_at
+      })
+      .eq("id", employeeForm.value.id);
 
-      console.log("Supabase update error:", error); // Log error after update
-
-      if (error) throw error;
-      addEmployeeMessage.value = "Employee updated successfully!";
-    } else {
-      // Add new employee
-      const { data: authData, error: authError } = await supabase.auth.signUp({
-        email: employeeForm.value.email,
-        password: employeeForm.value.password,
-        options: {
-          data: {
-            full_name: employeeForm.value.full_name,
-            role: employeeForm.value.role,
-          },
-        },
-      });
-
-      if (authError) throw authError;
-
-      if (employeeForm.value.role !== "cashier" && authData.user) {
-        const { error: profileUpdateError } = await supabase
-          .from("profiles")
-          .update({ role: employeeForm.value.role })
-          .eq("id", authData.user.id);
-
-        if (profileUpdateError) throw profileUpdateError;
-      }
-      addEmployeeMessage.value =
-        "Employee added successfully! An email has been sent for confirmation.";
-    }
+    if (error) throw error;
+    toast.success("Karyawan berhasil diperbarui!", {
+      description: `Karyawan ${employeeForm.value.full_name || employeeForm.value.email} telah berhasil diperbarui.`,
+    });
     await fetchEmployees();
     resetForm();
     isEmployeeFormOpen.value = false; // Close the dialog on success
   } catch (error: any) {
-    console.error("Error saving employee:", error.message);
-    addEmployeeMessage.value = "Failed to save employee: " + error.message;
-    addEmployeeError.value = true;
+    toast.error("Gagal menyimpan karyawan!", {
+      description: error.message,
+    });
   } finally {
-    loadingAddEmployee.value = false;
+    loading.value = false;
   }
 };
 
-const addNewEmployee = () => {
-  resetForm();
-  isEmployeeFormOpen.value = true;
-};
 
 const editEmployee = (employee: UserProfile) => {
   isEditingEmployee.value = true;
   employeeForm.value = {
     ...employee,
-    password: "", // Clear password when editing
     is_active: Boolean(employee.is_active), // Ensure is_active is a boolean
   };
-  addEmployeeMessage.value = "";
-  addEmployeeError.value = false;
   isEmployeeFormOpen.value = true; // Open the dialog for editing
+  isEmployeeDetailOpen.value = false; // Close detail dialog if open
+};
+
+const showEmployeeDetail = (employee: UserProfile) => {
+  selectedEmployee.value = employee;
+  isEmployeeDetailOpen.value = true;
 };
 
 const cancelEditEmployee = () => {
@@ -379,39 +324,7 @@ const cancelEditEmployee = () => {
   isEmployeeFormOpen.value = false; // Close the dialog on cancel
 };
 
-const confirmDeleteEmployee = (employeeId: string) => {
-  employeeToDeleteId.value = employeeId;
-  isConfirmDeleteOpen.value = true;
-};
 
-const deleteEmployeeConfirmed = async () => {
-  if (!employeeToDeleteId.value) return;
-
-  loadingAddEmployee.value = true;
-  addEmployeeMessage.value = "";
-  addEmployeeError.value = false;
-
-  try {
-    const { error } = await supabase
-      .from("profiles")
-      .delete()
-      .eq("id", employeeToDeleteId.value);
-
-    if (error) throw error;
-    addEmployeeMessage.value = "Employee deleted successfully!";
-    employees.value = employees.value.filter(
-      (emp) => emp.id !== employeeToDeleteId.value
-    );
-    isConfirmDeleteOpen.value = false; // Close the confirmation dialog
-    employeeToDeleteId.value = null; // Clear the ID
-  } catch (error: any) {
-    console.error("Error deleting employee:", error.message);
-    addEmployeeMessage.value = "Failed to delete employee: " + error.message;
-    addEmployeeError.value = true;
-  } finally {
-    loadingAddEmployee.value = false;
-  }
-};
 
 const resetForm = () => {
   isEditingEmployee.value = false;
@@ -419,14 +332,11 @@ const resetForm = () => {
     id: "",
     email: "",
     full_name: "",
-    password: "",
     role: "cashier",
     phone: "",
     address: "",
     is_active: true,
   };
-  addEmployeeMessage.value = "";
-  addEmployeeError.value = false;
 };
 
 const pageLoading = ref(true); // Controls the loading state for the entire page
@@ -444,18 +354,22 @@ const checkUserRole = async () => {
     .single();
 
   if (error) {
-    console.error("Error fetching user role:", error.message);
+    toast.error("Gagal memeriksa peran pengguna!", {
+      description: error.message,
+    });
     hasAdminRole.value = false;
     return;
   }
   if (!data) {
-    console.error("No profile data found for user.");
+    toast.error("Data profil pengguna tidak ditemukan.");
     hasAdminRole.value = false;
     return;
   }
   hasAdminRole.value = data?.role === "admin";
   if (!hasAdminRole.value) {
-    errorMessage.value = "Anda tidak memiliki izin untuk mengakses halaman ini.";
+    toast.warning("Anda tidak memiliki izin untuk mengakses halaman ini.", {
+      description: "Silakan hubungi administrator untuk mendapatkan akses.",
+    });
   }
 };
 
@@ -467,9 +381,9 @@ onMounted(async () => {
       await fetchEmployees();
     }
   } catch (error: any) {
-    console.error("Error during initialization:", error.message);
-    addEmployeeMessage.value = "Terjadi kesalahan saat memuat data.";
-    addEmployeeError.value = true;
+    toast.error("Terjadi kesalahan saat memuat data awal!", {
+      description: error.message,
+    });
   } finally {
     pageLoading.value = false; // End loading state
   }
@@ -477,9 +391,15 @@ onMounted(async () => {
 
 watch(user, async (newUser) => {
   if (newUser) {
-    await checkUserRole();
-    if (hasAdminRole.value) {
-      await fetchEmployees();
+    try {
+      await checkUserRole();
+      if (hasAdminRole.value) {
+        await fetchEmployees();
+      }
+    } catch (error: any) {
+      toast.error("Terjadi kesalahan saat memperbarui data pengguna!", {
+        description: error.message,
+      });
     }
   } else {
     hasAdminRole.value = false;
@@ -487,6 +407,17 @@ watch(user, async (newUser) => {
     router.push("/login");
   }
 });
+
+const formatDate = (dateString: string) => {
+  const options: Intl.DateTimeFormatOptions = {
+    year: "numeric",
+    month: "short",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  };
+  return new Date(dateString).toLocaleDateString("id-ID", options);
+};
 </script>
 
 <style scoped>

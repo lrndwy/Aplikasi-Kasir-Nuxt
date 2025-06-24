@@ -1,6 +1,6 @@
 <template>
   <div class="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
-    <h1 class="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+    <h1 class="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-900 dark:text-white">
       Manajemen Shift Kerja
     </h1>
 
@@ -62,22 +62,29 @@
                 <Checkbox id="shiftIsActive" v-model:checked="shiftForm.is_active" />
                 <Label for="shiftIsActive">Aktif</Label>
               </div>
-              <div v-if="errorMessage" class="text-red-500 text-sm mt-4">
-                {{ errorMessage }}
-              </div>
-              <div v-if="successMessage" class="text-green-500 text-sm mt-4">
-                {{ successMessage }}
-              </div>
-              <DialogFooter>
-                <Button type="submit" :disabled="loading">
-                  <span v-if="loading">Menyimpan...</span>
-                  <span v-else>{{ isEditing ? "Perbarui Shift" : "Tambah Shift" }}</span>
-                </Button>
+              <DialogFooter class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 pt-4">
                 <DialogClose as-child>
                   <Button type="button" variant="outline" @click="cancelEdit"
+                    class="w-full sm:w-auto mb-2 sm:mb-0"
                     >Batal</Button
                   >
                 </DialogClose>
+                <Button
+                  v-if="isEditing"
+                  type="button"
+                  variant="destructive"
+                  @click="confirmDeleteShift(shiftForm.id)"
+                  :disabled="loading"
+                  class="w-full sm:w-auto mb-2 sm:mb-0"
+                >
+                  Hapus Shift
+                </Button>
+                <Button type="submit" :disabled="loading" class="w-full sm:w-auto">
+                  <span v-if="loading">Menyimpan...</span>
+                  <span v-else>{{
+                    isEditing ? "Perbarui Shift" : "Tambah Shift"
+                  }}</span>
+                </Button>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -85,50 +92,70 @@
       </div>
 
       <!-- Daftar Shift -->
-      <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
-        <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
-          Daftar Shift
-        </h2>
-        <div class="overflow-x-auto">
-          <Table class="min-w-full">
-            <TableHeader>
-              <TableRow>
-                <TableHead class="min-w-[150px]">Nama Shift</TableHead>
-                <TableHead class="min-w-[120px]">Waktu Mulai</TableHead>
-                <TableHead class="min-w-[120px]">Waktu Selesai</TableHead>
-                <TableHead class="min-w-[80px]">Aktif</TableHead>
-                <TableHead class="min-w-[150px]">Dibuat Pada</TableHead>
-                <TableHead class="min-w-[150px]">Diperbarui Pada</TableHead>
-                <TableHead class="min-w-[150px]">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow v-for="shift in shifts" :key="shift.id">
-                <TableCell>{{ shift.name }}</TableCell>
-                <TableCell>{{ shift.start_time }}</TableCell>
-                <TableCell>{{ shift.end_time }}</TableCell>
-                <TableCell>{{ shift.is_active ? "Ya" : "Tidak" }}</TableCell>
-                <TableCell>{{ formatDate(shift.created_at) }}</TableCell>
-                <TableCell>{{ formatDate(shift.updated_at) }}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    @click="editShift(shift)"
-                    class="mr-2"
-                    >Edit</Button
-                  >
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    @click="confirmDeleteShift(shift.id)"
-                    :disabled="loading"
-                    >Hapus</Button
-                  >
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
+      <Card>
+        <CardHeader>
+          <CardTitle>Daftar Shift</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="overflow-x-auto">
+            <Table class="min-w-full">
+              <TableHeader>
+                <TableRow>
+                  <TableHead class="min-w-[150px]">Nama Shift</TableHead>
+                  <TableHead class="min-w-[120px]">Waktu Mulai</TableHead>
+                  <TableHead class="min-w-[120px]">Waktu Selesai</TableHead>
+                  <TableHead class="min-w-[80px]">Aktif</TableHead>
+                  <TableHead class="min-w-[150px]">Dibuat Pada</TableHead>
+                  <TableHead class="min-w-[150px]">Diperbarui Pada</TableHead>
+                  <TableHead class="min-w-[150px]">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow v-for="shift in shifts" :key="shift.id" @click="showShiftDetail(shift)" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
+                  <TableCell>{{ shift.name }}</TableCell>
+                  <TableCell>{{ shift.start_time }}</TableCell>
+                  <TableCell>{{ shift.end_time }}</TableCell>
+                  <TableCell>
+                    <Badge :variant="shift.is_active ? 'success' : 'destructive'">
+                      {{ shift.is_active ? "Ya" : "Tidak" }}
+                    </Badge>
+                  </TableCell>
+                  <TableCell>{{ formatDate(shift.created_at) }}</TableCell>
+                  <TableCell>{{ formatDate(shift.updated_at) }}</TableCell>
+                  <TableCell>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger as-child>
+                        <Button variant="ghost" class="h-8 w-8 p-0">
+                          <span class="sr-only">Open menu</span>
+                          <MoreHorizontal class="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                        <DropdownMenuItem @click="showShiftDetail(shift)">
+                          <Info class="mr-2 h-4 w-4" />Detail
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @click="editShift(shift)">
+                          <Edit class="mr-2 h-4 w-4" />Edit
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @click="confirmDeleteShift(shift.id)">
+                          <Trash2 class="mr-2 h-4 w-4" />Hapus
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
+          <div
+            v-if="shifts.length === 0 && !loading"
+            class="text-center text-gray-500 dark:text-gray-400 mt-4"
+          >
+            Tidak ada shift ditemukan.
+          </div>
+        </CardContent>
+      </Card>
         </div>
         <div
           v-if="shifts.length === 0 && !loading"
@@ -161,8 +188,57 @@
           </DialogFooter>
         </DialogContent>
       </Dialog>
-    </div>
-  </div>
+
+
+    <!-- Shift Detail Dialog -->
+    <Dialog :open="isShiftDetailOpen" @update:open="isShiftDetailOpen = $event">
+      <DialogContent class="sm:max-w-[425px]">
+        <DialogHeader>
+          <DialogTitle>Detail Shift</DialogTitle>
+          <DialogDescription>Informasi lengkap mengenai shift ini.</DialogDescription>
+        </DialogHeader>
+        <div v-if="selectedShift" class="grid gap-4 py-4">
+          <div class="grid grid-cols-4 items-center gap-4">
+            <Label for="detailShiftName" class="text-right">Nama Shift</Label>
+            <Input id="detailShiftName" :model-value="selectedShift.name" readonly class="col-span-3" />
+          </div>
+          <div class="grid grid-cols-4 items-center gap-4">
+            <Label for="detailStartTime" class="text-right">Waktu Mulai</Label>
+            <Input id="detailStartTime" :model-value="selectedShift.start_time" readonly class="col-span-3" />
+          </div>
+          <div class="grid grid-cols-4 items-center gap-4">
+            <Label for="detailEndTime" class="text-right">Waktu Selesai</Label>
+            <Input id="detailEndTime" :model-value="selectedShift.end_time" readonly class="col-span-3" />
+          </div>
+          <div class="grid grid-cols-4 items-center gap-4">
+            <Label for="detailIsActive" class="text-right">Aktif</Label>
+            <div class="col-span-3">
+              <Badge :variant="selectedShift.is_active ? 'success' : 'destructive'">
+                {{ selectedShift.is_active ? "Ya" : "Tidak" }}
+              </Badge>
+            </div>
+          </div>
+          <div class="grid grid-cols-4 items-center gap-4">
+            <Label for="detailCreatedAt" class="text-right">Dibuat Pada</Label>
+            <Input id="detailCreatedAt" :model-value="formatDate(selectedShift.created_at)" readonly class="col-span-3" />
+          </div>
+          <div class="grid grid-cols-4 items-center gap-4">
+            <Label for="detailUpdatedAt" class="text-right">Diperbarui Pada</Label>
+            <Input id="detailUpdatedAt" :model-value="formatDate(selectedShift.updated_at)" readonly class="col-span-3" />
+          </div>
+        </div>
+        <DialogFooter>
+          <DialogClose as-child>
+            <Button type="button" variant="outline">Tutup</Button>
+          </DialogClose>
+          <Button @click="editShift(selectedShift!)">
+            <Edit class="mr-2 h-4 w-4" />Edit Shift
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+    <Toaster />
+
 </template>
 
 <script setup lang="ts">
@@ -171,10 +247,15 @@ definePageMeta({
 })
 import { ref, onMounted, watch } from "vue";
 import { useSupabaseClient, useSupabaseUser } from "#imports";
+import { toast } from 'vue-sonner';
+import { Toaster } from '@/components/ui/sonner';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Textarea } from "@/components/ui/textarea"; // Added for consistency with employee-shifts.vue
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import 'vue-sonner/style.css';
 import {
   Table,
   TableBody,
@@ -193,6 +274,14 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, Edit, Trash2, Info } from "lucide-vue-next";
 
 interface Shift {
   id: string;
@@ -200,6 +289,7 @@ interface Shift {
   start_time: string;
   end_time: string;
   is_active: boolean;
+  total_work_hours: number; // New field
   created_at: string;
   updated_at: string;
 }
@@ -219,16 +309,15 @@ const shiftForm = ref({
 const pageLoading = ref(true); // Controls the overall page loading state
 const isEditing = ref(false);
 const loading = ref(false);
-const errorMessage = ref("");
-const successMessage = ref("");
 const hasAdminOrManagerRole = ref(false);
 const isShiftFormOpen = ref(false); // Controls the add/edit shift dialog
 const isConfirmDeleteOpen = ref(false); // Controls the delete confirmation dialog
 const shiftToDeleteId = ref<string | null>(null); // Stores the ID of the shift to be deleted
+const isShiftDetailOpen = ref(false); // Controls the shift detail dialog
+const selectedShift = ref<Shift | null>(null); // Stores the selected shift for detail view
 
 const fetchShifts = async () => {
   loading.value = true;
-  errorMessage.value = "";
   try {
     const { data, error } = await supabase
       .from("shifts")
@@ -238,7 +327,9 @@ const fetchShifts = async () => {
     if (error) throw error;
     shifts.value = data as Shift[];
   } catch (error: any) {
-    errorMessage.value = error.message;
+    toast.error("Gagal memuat shift!", {
+      description: error.message,
+    });
   } finally {
     loading.value = false;
   }
@@ -256,25 +347,27 @@ const checkUserRole = async () => {
     .single();
 
   if (error) {
-    console.error("Error fetching user role:", error.message);
+    toast.error("Gagal memeriksa peran pengguna!", {
+      description: error.message,
+    });
     hasAdminOrManagerRole.value = false;
     return;
   }
   if (!data) {
-    console.error("No profile data found for user.");
+    toast.error("Data profil pengguna tidak ditemukan.");
     hasAdminOrManagerRole.value = false;
     return;
   }
   hasAdminOrManagerRole.value = data?.role === "admin" || data?.role === "manager";
   if (!hasAdminOrManagerRole.value) {
-    errorMessage.value = "Anda tidak memiliki izin untuk mengakses halaman ini.";
+    toast.warning("Anda tidak memiliki izin untuk mengakses halaman ini.", {
+      description: "Silakan hubungi administrator untuk mendapatkan akses.",
+    });
   }
 };
 
 const saveShift = async () => {
   loading.value = true;
-  errorMessage.value = "";
-  successMessage.value = "";
   try {
     if (isEditing.value) {
       const { error } = await supabase
@@ -284,26 +377,34 @@ const saveShift = async () => {
           start_time: shiftForm.value.start_time,
           end_time: shiftForm.value.end_time,
           is_active: shiftForm.value.is_active,
+          total_work_hours: calculateTotalWorkHours(shiftForm.value.start_time, shiftForm.value.end_time), // Calculate and save
           updated_at: new Date().toISOString(),
         })
         .eq("id", shiftForm.value.id);
       if (error) throw error;
-      successMessage.value = "Shift berhasil diperbarui!";
+      toast.success("Shift berhasil diperbarui!", {
+        description: `Shift ${shiftForm.value.name} telah berhasil diperbarui.`,
+      });
     } else {
       const { error } = await supabase.from("shifts").insert({
         name: shiftForm.value.name,
         start_time: shiftForm.value.start_time,
         end_time: shiftForm.value.end_time,
         is_active: shiftForm.value.is_active,
+        total_work_hours: calculateTotalWorkHours(shiftForm.value.start_time, shiftForm.value.end_time), // Calculate and save
       });
       if (error) throw error;
-      successMessage.value = "Shift berhasil ditambahkan!";
+      toast.success("Shift berhasil ditambahkan!", {
+        description: `Shift ${shiftForm.value.name} telah berhasil ditambahkan.`,
+      });
     }
     resetForm();
     await fetchShifts();
     isShiftFormOpen.value = false; // Close the dialog on success
   } catch (error: any) {
-    errorMessage.value = error.message;
+    toast.error("Gagal menyimpan shift!", {
+      description: error.message,
+    });
   } finally {
     loading.value = false;
   }
@@ -317,9 +418,8 @@ const addNewShift = () => {
 const editShift = (shift: Shift) => {
   isEditing.value = true;
   shiftForm.value = { ...shift };
-  errorMessage.value = "";
-  successMessage.value = "";
   isShiftFormOpen.value = true; // Open the dialog for editing
+  isShiftDetailOpen.value = false; // Close detail dialog if open
 };
 
 const cancelEdit = () => {
@@ -329,6 +429,7 @@ const cancelEdit = () => {
 
 const confirmDeleteShift = (id: string) => {
   shiftToDeleteId.value = id;
+  isShiftFormOpen.value = false; // Close the shift form dialog
   isConfirmDeleteOpen.value = true;
 };
 
@@ -336,20 +437,23 @@ const deleteShiftConfirmed = async () => {
   if (!shiftToDeleteId.value) return;
 
   loading.value = true;
-  errorMessage.value = "";
-  successMessage.value = "";
   try {
     const { error } = await supabase
       .from("shifts")
       .delete()
       .eq("id", shiftToDeleteId.value);
     if (error) throw error;
-    successMessage.value = "Shift berhasil dihapus!";
-    await fetchShifts();
+    loading.value = false; // Set loading to false before closing dialog
     isConfirmDeleteOpen.value = false; // Close the confirmation dialog
     shiftToDeleteId.value = null; // Clear the ID
+    toast.success("Shift berhasil dihapus!", {
+      description: "Shift telah berhasil dihapus dari daftar.",
+    });
+    await fetchShifts();
   } catch (error: any) {
-    errorMessage.value = error.message;
+    toast.error("Gagal menghapus shift!", {
+      description: error.message,
+    });
   } finally {
     loading.value = false;
   }
@@ -363,8 +467,23 @@ const resetForm = () => {
     start_time: "08:00:00",
     end_time: "16:00:00",
     is_active: true,
+    total_work_hours: 8, // Default value
   };
-  shiftToDeleteId.value = null; // Clear the ID
+};
+
+const calculateTotalWorkHours = (startTime: string, endTime: string): number => {
+  const start = new Date(`2000-01-01T${startTime}`);
+  const end = new Date(`2000-01-01T${endTime}`);
+  let diffMs = end.getTime() - start.getTime();
+  if (diffMs < 0) { // Handle overnight shifts
+    diffMs += 24 * 60 * 60 * 1000;
+  }
+  return parseFloat((diffMs / (1000 * 60 * 60)).toFixed(2));
+};
+
+const showShiftDetail = (shift: Shift) => {
+  selectedShift.value = shift;
+  isShiftDetailOpen.value = true;
 };
 
 const formatDate = (dateString: string) => {
@@ -386,8 +505,9 @@ onMounted(async () => {
       await fetchShifts();
     }
   } catch (error: any) {
-    console.error("Error during initial setup:", error.message);
-    errorMessage.value = "Terjadi kesalahan saat memuat data.";
+    toast.error("Terjadi kesalahan saat memuat data awal!", {
+      description: error.message,
+    });
   } finally {
     pageLoading.value = false; // End loading state
   }

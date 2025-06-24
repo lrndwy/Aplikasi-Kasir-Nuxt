@@ -1,6 +1,6 @@
 <template>
-  <div class="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
-    <h1 class="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+  <div class="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900 p-2 sm:p-4">
+    <h1 class="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-900 dark:text-white">
       Manajemen Produk
     </h1>
 
@@ -34,17 +34,58 @@
                 }}
               </DialogDescription>
             </DialogHeader>
-            <form @submit.prevent="saveProduct" class="space-y-4 py-4">
+            <form @submit.prevent="saveProduct" class="space-y-6 py-4">
               <div>
-                <Label for="productName" class="mb-2">Nama Produk</Label>
-                <Input
-                  id="productName"
-                  v-model="productForm.name"
-                  type="text"
-                  placeholder="Nama Produk"
-                  required
+                <Label for="productImage" class="mb-2">Gambar Produk</Label>
+                <ImageUpload
+                  v-model="productForm.imageFile"
+                  :initial-image-url="productForm.image_url"
+                  @remove="removeImage"
                 />
+                <div
+                  v-if="uploadingImage"
+                  class="text-sm text-gray-500 dark:text-gray-400 mt-2"
+                >
+                  Mengunggah gambar...
+                </div>
               </div>
+
+              <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div>
+                  <Label for="productName" class="mb-2">Nama Produk</Label>
+                  <Input
+                    id="productName"
+                    v-model="productForm.name"
+                    type="text"
+                    placeholder="Nama Produk"
+                    required
+                  />
+                </div>
+                <div>
+                  <Label for="productCategory" class="mb-2">Kategori</Label>
+                  <Select v-model="productForm.category_id">
+                    <SelectTrigger class="w-full">
+                      <SelectValue
+                        :placeholder="
+                          productForm.category_id
+                            ? categories.find((c) => c.id === productForm.category_id)?.name
+                            : 'Pilih Kategori'
+                        "
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem
+                        v-for="category in categories"
+                        :key="category.id"
+                        :value="category.id"
+                      >
+                        {{ category.name }}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
               <div>
                 <Label for="productDescription" class="mb-2">Deskripsi</Label>
                 <Textarea
@@ -53,29 +94,7 @@
                   placeholder="Deskripsi Produk"
                 />
               </div>
-              <div>
-                <Label for="productCategory" class="mb-2">Kategori</Label>
-                <Select v-model="productForm.category_id">
-                  <SelectTrigger>
-                    <SelectValue
-                      :placeholder="
-                        productForm.category_id
-                          ? categories.find((c) => c.id === productForm.category_id)?.name
-                          : 'Pilih Kategori'
-                      "
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem
-                      v-for="category in categories"
-                      :key="category.id"
-                      :value="category.id"
-                    >
-                      {{ category.name }}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
+
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label for="productSku" class="mb-2">SKU</Label>
@@ -96,6 +115,7 @@
                   />
                 </div>
               </div>
+
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label for="productPrice" class="mb-2">Harga Jual</Label>
@@ -117,6 +137,7 @@
                   />
                 </div>
               </div>
+
               <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div>
                   <Label for="productStock" class="mb-2">Stok</Label>
@@ -135,57 +156,34 @@
                   />
                 </div>
               </div>
-              <div>
-                <Label for="productImage" class="mb-2">Gambar Produk</Label>
-                <Input
-                  id="productImage"
-                  type="file"
-                  accept="image/*"
-                  @change="handleFileChange"
-                  ref="fileInputRef"
-                />
-                <div
-                  v-if="productForm.image_url"
-                  class="mt-2 flex items-center space-x-2"
-                >
-                  <img
-                    :src="productForm.image_url"
-                    alt="Product Image"
-                    class="w-20 h-20 object-cover rounded-md"
-                  />
-                  <Button type="button" variant="outline" size="sm" @click="removeImage"
-                    >Hapus Gambar</Button
-                  >
-                </div>
-                <div
-                  v-if="uploadingImage"
-                  class="text-sm text-gray-500 dark:text-gray-400 mt-2"
-                >
-                  Mengunggah gambar...
-                </div>
-              </div>
+
               <div class="flex items-center space-x-2">
                 <Checkbox id="productIsActive" v-model="productForm.is_active" />
                 <Label for="productIsActive">Aktif</Label>
               </div>
-              <div v-if="errorMessage" class="text-red-500 text-sm mt-4">
-                {{ errorMessage }}
-              </div>
-              <div v-if="successMessage" class="text-green-500 text-sm mt-4">
-                {{ successMessage }}
-              </div>
-              <DialogFooter>
-                <Button type="submit" :disabled="loading">
+              <DialogFooter class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 pt-4">
+                <DialogClose as-child>
+                  <Button type="button" variant="outline" @click="cancelEdit"
+                    class="w-full sm:w-auto mb-2 sm:mb-0"
+                    >Batal</Button
+                  >
+                </DialogClose>
+                <Button
+                  v-if="isEditing"
+                  type="button"
+                  variant="destructive"
+                  @click="confirmDeleteProduct(productForm.id)"
+                  :disabled="loading"
+                  class="w-full sm:w-auto mb-2 sm:mb-0"
+                >
+                  Hapus Produk
+                </Button>
+                <Button type="submit" :disabled="loading" class="w-full sm:w-auto">
                   <span v-if="loading">Menyimpan...</span>
                   <span v-else>{{
                     isEditing ? "Perbarui Produk" : "Tambah Produk"
                   }}</span>
                 </Button>
-                <DialogClose as-child>
-                  <Button type="button" variant="outline" @click="cancelEdit"
-                    >Batal</Button
-                  >
-                </DialogClose>
               </DialogFooter>
             </form>
           </DialogContent>
@@ -193,71 +191,91 @@
       </div>
 
       <!-- Daftar Produk -->
-      <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
-        <h2 class="text-2xl font-semibold mb-4 text-gray-900 dark:text-white">
+        <h2 class="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4 text-gray-900 dark:text-white">
           Daftar Produk
         </h2>
-        <div class="overflow-x-auto">
-          <Table class="min-w-full">
-            <TableHeader>
-              <TableRow>
-                <TableHead class="min-w-[80px]">Gambar</TableHead>
-                <TableHead class="min-w-[150px]">Nama</TableHead>
-                <TableHead class="min-w-[120px]">Kategori</TableHead>
-                <TableHead class="min-w-[100px]">Harga</TableHead>
-                <TableHead class="min-w-[80px]">Stok</TableHead>
-                <TableHead class="min-w-[80px]">Aktif</TableHead>
-                <TableHead class="min-w-[150px]">Dibuat Pada</TableHead>
-                <TableHead class="min-w-[150px]">Diperbarui Pada</TableHead>
-                <TableHead class="min-w-[150px]">Aksi</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              <TableRow v-for="product in products" :key="product.id">
-                <TableCell>
-                  <img
-                    v-if="product.image_url"
-                    :src="product.image_url"
-                    alt="Product Image"
-                    class="w-16 h-16 object-cover rounded-md"
-                  />
-                  <span v-else class="text-gray-400">No Image</span>
-                </TableCell>
-                <TableCell>{{ product.name }}</TableCell>
-                <TableCell>{{
-                  categories.find((c) => c.id === product.category_id)?.name || "N/A"
-                }}</TableCell>
-                <TableCell>{{ formatCurrency(product.price) }}</TableCell>
-                <TableCell>{{ product.stock }}</TableCell>
-                <TableCell>{{ product.is_active ? "Ya" : "Tidak" }}</TableCell>
-                <TableCell>{{ formatDate(product.created_at) }}</TableCell>
-                <TableCell>{{ formatDate(product.updated_at) }}</TableCell>
-                <TableCell>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    @click="editProduct(product)"
-                    class="mr-2"
-                    >Edit</Button
-                  >
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    @click="confirmDeleteProduct(product.id)"
-                    >Hapus</Button
-                  >
-                </TableCell>
-              </TableRow>
-            </TableBody>
-          </Table>
-        </div>
         <div
           v-if="products.length === 0 && !loading"
-          class="text-center text-gray-500 dark:text-gray-400 mt-4"
+          class="text-center text-gray-500 dark:text-gray-400 py-8 bg-white dark:bg-gray-800 shadow-md rounded-lg p-4 sm:p-6"
         >
           Tidak ada produk ditemukan.
         </div>
-      </div>
+        <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
+          <Card
+            v-for="product in products"
+            :key="product.id"
+            class="flex cursor-pointer flex-col overflow-hidden rounded-lg border bg-white shadow-sm transition-all hover:shadow-lg dark:border-gray-700 dark:bg-gray-800"
+            @click="editProduct(product)"
+          >
+            <div class="relative">
+              <img
+                v-if="product.image_url"
+                :src="product.image_url"
+                alt="Product Image"
+                class="aspect-square w-full object-cover -mt-10"
+              />
+              <div
+                v-else
+                class="flex aspect-square w-full items-center justify-center bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+              >
+                No Image
+              </div>
+              <div class="absolute right-2 -top-3 flex items-center space-x-2">
+                <Badge
+                  :class="product.is_active ? ' text-white' : 'bg-red-500 text-white'"
+                  class="text-xs"
+                >
+                  {{ product.is_active ? "Aktif" : "Tidak Aktif" }}
+                </Badge>
+              </div>
+            </div>
+            <div class="p-4">
+              <h3 class="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
+                {{ product.name }}
+              </h3>
+              <p class="mb-2 text-sm text-gray-600 dark:text-gray-300">
+                {{ product.description || "Tidak ada deskripsi." }}
+              </p>
+              <div class="mb-2 flex items-center justify-between text-sm">
+                <span class="text-gray-700 dark:text-gray-300">
+                  Kategori:
+                  <span class="font-medium">{{
+                    categories.find((c) => c.id === product.category_id)?.name || "N/A"
+                  }}</span>
+                </span>
+                <Badge variant="outline" class="text-gray-700 dark:text-gray-300">
+                  SKU: {{ product.sku || "N/A" }}
+                </Badge>
+              </div>
+              <div class="mb-3 flex items-center justify-between text-sm">
+                <span class="text-gray-700 dark:text-gray-300">
+                  Stok:
+                  <span class="font-medium">{{ product.stock }}</span>
+                </span>
+                <span
+                  :class="{
+                    'text-red-500': product.stock <= product.min_stock,
+                    'text-orange-500':
+                      product.stock > product.min_stock && product.stock < 10,
+                    'text-green-500': product.stock >= 10,
+                  }"
+                  class="font-medium"
+                >
+                  {{
+                    product.stock <= product.min_stock
+                      ? "Stok Rendah!"
+                      : product.stock < 10
+                        ? "Stok Sedang"
+                        : "Stok Aman"
+                  }}
+                </span>
+              </div>
+              <p class="text-xl font-bold text-green-600 dark:text-green-400">
+                {{ formatCurrency(product.price) }}
+              </p>
+            </div>
+          </Card>
+        </div>
 
       <!-- Delete Confirmation Dialog -->
       <Dialog :open="isConfirmDeleteOpen" @update:open="isConfirmDeleteOpen = $event">
@@ -283,6 +301,7 @@
         </DialogContent>
       </Dialog>
     </div>
+    <Toaster />
   </div>
 </template>
 
@@ -292,19 +311,24 @@ definePageMeta({
 })
 import { ref, onMounted } from "vue";
 import { useSupabaseClient, useSupabaseUser } from "#imports";
+import { toast } from 'vue-sonner';
+import { Toaster } from '@/components/ui/sonner';
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Badge } from "@/components/ui/badge";
+import 'vue-sonner/style.css' // vue-sonner v2 requires this importx
+import { ImageUpload } from '@/components/ui/image-upload';
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
+  Card,
+  CardContent,
+  CardDescription,
+  CardFooter,
+  CardHeader,
+  CardTitle,
+} from "@/components/ui/card";
 import {
   Select,
   SelectContent,
@@ -322,6 +346,14 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, Edit, Trash2 } from "lucide-vue-next";
 
 interface Product {
   id: string;
@@ -370,8 +402,6 @@ const productForm = ref({
 const pageLoading = ref(true); // Controls the loading state for the entire page
 const isEditing = ref(false);
 const loading = ref(false);
-const errorMessage = ref("");
-const successMessage = ref("");
 const hasAdminOrManagerRole = ref(false);
 const uploadingImage = ref(false);
 const fileInputRef = ref<HTMLInputElement | null>(null);
@@ -381,7 +411,6 @@ const productToDeleteId = ref<string | null>(null); // Stores the ID of the prod
 
 const fetchProducts = async () => {
   loading.value = true;
-  errorMessage.value = "";
   try {
     const { data, error } = await supabase
       .from("products")
@@ -391,7 +420,9 @@ const fetchProducts = async () => {
     if (error) throw error;
     products.value = data as Product[];
   } catch (error: any) {
-    errorMessage.value = error.message;
+    toast.error("Gagal memuat produk!", {
+      description: error.message,
+    });
   } finally {
     loading.value = false;
   }
@@ -408,7 +439,9 @@ const fetchCategories = async () => {
     if (error) throw error;
     categories.value = data as Category[];
   } catch (error: any) {
-    console.error("Error fetching categories:", error.message);
+    toast.error("Gagal memuat kategori!", {
+      description: error.message,
+    });
   }
 };
 
@@ -424,25 +457,27 @@ const checkUserRole = async () => {
     .single();
 
   if (error) {
-    console.error("Error fetching user role:", error.message);
+    toast.error("Gagal memeriksa peran pengguna!", {
+      description: error.message,
+    });
     hasAdminOrManagerRole.value = false;
     return;
   }
   if (!data) {
-    console.error("No profile data found for user.");
+    toast.error("Data profil pengguna tidak ditemukan.");
     hasAdminOrManagerRole.value = false;
     return;
   }
   hasAdminOrManagerRole.value = data?.role === "admin" || data?.role === "manager";
   if (!hasAdminOrManagerRole.value) {
-    errorMessage.value = "Anda tidak memiliki izin untuk mengakses halaman ini.";
+    toast.warning("Anda tidak memiliki izin untuk mengakses halaman ini.", {
+      description: "Silakan hubungi administrator untuk mendapatkan akses.",
+    });
   }
 };
 
 const saveProduct = async () => {
   loading.value = true;
-  errorMessage.value = "";
-  successMessage.value = "";
   uploadingImage.value = false;
 
   try {
@@ -503,17 +538,23 @@ const saveProduct = async () => {
         .update({ ...productData, updated_at: new Date().toISOString() })
         .eq("id", productForm.value.id);
       if (error) throw error;
-      successMessage.value = "Produk berhasil diperbarui!";
+      toast.success("Produk berhasil diperbarui!", {
+        description: `Produk ${productForm.value.name} telah berhasil diperbarui.`,
+      });
     } else {
       const { error } = await supabase.from("products").insert(productData);
       if (error) throw error;
-      successMessage.value = "Produk berhasil ditambahkan!";
+      toast.success("Produk berhasil ditambahkan!", {
+        description: `Produk ${productForm.value.name} telah berhasil ditambahkan.`,
+      });
     }
     resetForm();
     await fetchProducts();
     isProductFormOpen.value = false; // Close the dialog on success
   } catch (error: any) {
-    errorMessage.value = error.message;
+    toast.error("Gagal menyimpan produk!", {
+      description: error.message,
+    });
   } finally {
     loading.value = false;
     uploadingImage.value = false;
@@ -528,8 +569,6 @@ const addNewProduct = () => {
 const editProduct = (product: Product) => {
   isEditing.value = true;
   productForm.value = { ...product, imageFile: null, is_active: product.is_active }; // Clear imageFile and explicitly set is_active when editing
-  errorMessage.value = "";
-  successMessage.value = "";
   if (fileInputRef.value) {
     fileInputRef.value.value = ""; // Clear the file input
   }
@@ -543,6 +582,7 @@ const cancelEdit = () => {
 
 const confirmDeleteProduct = (id: string) => {
   productToDeleteId.value = id;
+  isProductFormOpen.value = false; // Close the product form dialog
   isConfirmDeleteOpen.value = true;
 };
 
@@ -550,20 +590,23 @@ const deleteProductConfirmed = async () => {
   if (!productToDeleteId.value) return;
 
   loading.value = true;
-  errorMessage.value = "";
-  successMessage.value = "";
   try {
     const { error } = await supabase
       .from("products")
       .delete()
       .eq("id", productToDeleteId.value);
     if (error) throw error;
-    successMessage.value = "Produk berhasil dihapus!";
-    await fetchProducts();
+    loading.value = false; // Set loading to false before closing dialog
     isConfirmDeleteOpen.value = false; // Close the confirmation dialog
     productToDeleteId.value = null; // Clear the ID
+    toast.success("Produk berhasil dihapus!", {
+      description: "Produk telah berhasil dihapus dari daftar.",
+    });
+    await fetchProducts();
   } catch (error: any) {
-    errorMessage.value = error.message;
+    toast.error("Gagal menghapus produk!", {
+      description: error.message,
+    });
   } finally {
     loading.value = false;
   }
@@ -600,13 +643,11 @@ const formatCurrency = (value: number) => {
   }).format(value);
 };
 
-const handleFileChange = (event: Event) => {
-  const target = event.target as HTMLInputElement;
-  if (target.files && target.files[0]) {
-    productForm.value.imageFile = target.files[0];
-    productForm.value.image_url = URL.createObjectURL(target.files[0]); // For immediate preview
+const handleFileChange = (file: File | null) => {
+  productForm.value.imageFile = file;
+  if (file) {
+    productForm.value.image_url = URL.createObjectURL(file); // For immediate preview
   } else {
-    productForm.value.imageFile = null;
     productForm.value.image_url = "";
   }
 };
@@ -614,9 +655,7 @@ const handleFileChange = (event: Event) => {
 const removeImage = () => {
   productForm.value.imageFile = null;
   productForm.value.image_url = "";
-  if (fileInputRef.value) {
-    fileInputRef.value.value = ""; // Clear the file input
-  }
+  // The ImageUpload component handles clearing its internal file input
 };
 
 const formatDate = (dateString: string) => {
@@ -639,8 +678,9 @@ onMounted(async () => {
       await fetchProducts();
     }
   } catch (error: any) {
-    console.error("Error during initialization:", error.message);
-    errorMessage.value = "Terjadi kesalahan saat memuat data.";
+    toast.error("Terjadi kesalahan saat memuat data awal!", {
+      description: error.message,
+    });
   } finally {
     pageLoading.value = false; // End loading state
   }

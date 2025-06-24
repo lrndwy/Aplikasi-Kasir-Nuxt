@@ -1,6 +1,6 @@
 <template>
-  <div class="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900 p-4">
-    <h1 class="text-3xl font-bold mb-6 text-gray-900 dark:text-white">
+  <div class="flex flex-col min-h-screen bg-gray-100 dark:bg-gray-900 p-2 sm:p-4">
+    <h1 class="text-2xl sm:text-3xl font-bold mb-4 sm:mb-6 text-gray-900 dark:text-white">
       Riwayat Transaksi
     </h1>
 
@@ -13,170 +13,136 @@
     </div>
 
     <div v-else>
-      <div class="mb-4 flex space-x-4">
+      <div class="mb-4 flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4">
         <Input
           v-model="searchQuery"
           placeholder="Cari nomor transaksi..."
-          class="w-full md:w-1/3 bg-white dark:bg-gray-950"
+          class="w-full sm:max-w-xs bg-white dark:bg-gray-950"
         />
-        <Select v-model="filterStatus" class="w-full md:w-1/4">
-          <SelectTrigger class="bg-white dark:bg-gray-950">
-            <SelectValue
-              :placeholder="filterStatus === 'all' ? 'Filter Status' : filterStatus"
-            />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Semua Status</SelectItem>
-            <SelectItem value="completed">Selesai</SelectItem>
-            <SelectItem value="pending">Pending</SelectItem>
-            <SelectItem value="cancelled">Dibatalkan</SelectItem>
-            <SelectItem value="refunded">Dikembalikan</SelectItem>
-          </SelectContent>
-        </Select>
-        <Select
-          v-if="hasAdminOrManagerRole"
-          v-model="filterCashier"
-          class="w-full md:w-1/4"
-        >
-          <SelectTrigger class="bg-white dark:bg-gray-950">
-            <SelectValue
-              :placeholder="
-                filterCashier === 'all'
-                  ? 'Filter Kasir'
-                  : cashiers.find((c) => c.id === filterCashier)?.full_name ||
-                    'Filter Kasir'
-              "
-            />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="all">Semua Kasir</SelectItem>
-            <SelectItem v-for="cashier in cashiers" :key="cashier.id" :value="cashier.id">
-              {{ cashier.full_name }}
-            </SelectItem>
-          </SelectContent>
-        </Select>
+        <div class="flex gap-2 w-full sm:w-auto">
+          <Dialog :open="isFilterDialogOpen" @update:open="isFilterDialogOpen = $event">
+            <DialogTrigger as-child>
+              <Button variant="outline" class="w-full sm:w-auto">
+                <Filter class="h-4 w-4 mr-2" />Filter
+              </Button>
+            </DialogTrigger>
+            <DialogContent class="sm:max-w-[425px] p-6">
+              <DialogHeader>
+                <DialogTitle>Filter Transaksi</DialogTitle>
+                <DialogDescription>Pilih opsi filter untuk transaksi.</DialogDescription>
+              </DialogHeader>
+              <div class="grid gap-4 py-4">
+                <div>
+                  <Label for="filterStatus" class="mb-2">Status Pembayaran</Label>
+                  <Select v-model="filterStatus">
+                    <SelectTrigger class="bg-white dark:bg-gray-950 w-full">
+                      <SelectValue
+                        :placeholder="filterStatus === 'all' ? 'Filter Status' : filterStatus"
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Semua Status</SelectItem>
+                      <SelectItem value="completed">Selesai</SelectItem>
+                      <SelectItem value="pending">Pending</SelectItem>
+                      <SelectItem value="cancelled">Dibatalkan</SelectItem>
+                      <SelectItem value="refunded">Dikembalikan</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div v-if="hasAdminOrManagerRole">
+                  <Label for="filterCashier" class="mb-2">Kasir</Label>
+                  <Select v-model="filterCashier">
+                    <SelectTrigger class="bg-white dark:bg-gray-950 w-full">
+                      <SelectValue
+                        :placeholder="
+                          filterCashier === 'all'
+                            ? 'Filter Kasir'
+                            : cashiers.find((c) => c.id === filterCashier)?.full_name ||
+                              'Filter Kasir'
+                        "
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="all">Semua Kasir</SelectItem>
+                      <SelectItem v-for="cashier in cashiers" :key="cashier.id" :value="cashier.id">
+                        {{ cashier.full_name }}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button type="button" variant="outline" @click="isFilterDialogOpen = false">Tutup</Button>
+              </DialogFooter>
+            </DialogContent>
+          </Dialog>
+        </div>
       </div>
 
-      <div class="bg-white dark:bg-gray-800 shadow-md rounded-lg p-6">
-        <Table>
-          <TableHeader>
-            <TableRow>
-              <TableHead>No. Transaksi</TableHead>
-              <TableHead>Tanggal</TableHead>
-              <TableHead>Kasir</TableHead>
-              <TableHead>Pelanggan</TableHead>
-              <TableHead>Total Akhir</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Aksi</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            <template v-if="transactions.length > 0">
-              <template v-for="transaction in transactions" :key="transaction.id">
+      <Card>
+        <CardHeader>
+          <CardTitle>Daftar Transaksi</CardTitle>
+        </CardHeader>
+        <CardContent>
+          <div class="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
+                  <TableHead class="min-w-[150px]">No. Transaksi</TableHead>
+                  <TableHead class="min-w-[150px] hidden md:table-cell">Tanggal</TableHead>
+                  <TableHead class="min-w-[100px] hidden md:table-cell">Kasir</TableHead>
+                  <TableHead class="min-w-[100px] hidden md:table-cell">Pelanggan</TableHead>
+                  <TableHead class="min-w-[100px]">Total Akhir</TableHead>
+                  <TableHead class="min-w-[80px]">Status</TableHead>
+                  <TableHead class="min-w-[150px]">Aksi</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <TableRow v-for="transaction in transactions" :key="transaction.id" @click="showTransactionDetail(transaction)" class="cursor-pointer hover:bg-gray-50 dark:hover:bg-gray-700">
                   <TableCell>{{ transaction.transaction_number }}</TableCell>
-                  <TableCell>{{ formatDate(transaction.created_at) }}</TableCell>
-                  <TableCell>{{ transaction.cashier_name || "N/A" }}</TableCell>
-                  <TableCell>{{ transaction.customer_name || "Umum" }}</TableCell>
+                  <TableCell class="hidden md:table-cell">{{ formatDate(transaction.created_at) }}</TableCell>
+                  <TableCell class="hidden md:table-cell">{{ transaction.cashier_name || "N/A" }}</TableCell>
+                  <TableCell class="hidden md:table-cell">{{ transaction.customer_name || "Umum" }}</TableCell>
                   <TableCell>{{ formatCurrency(transaction.final_amount) }}</TableCell>
                   <TableCell>
                     <Badge :variant="getStatusVariant(transaction.payment_status)">
                       {{ transaction.payment_status }}
                     </Badge>
                   </TableCell>
-                  <TableCell>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      @click="viewTransactionDetails(transaction)"
-                      >Detail</Button
-                    >
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      @click="editTransaction(transaction)"
-                      class="ml-2"
-                      >Edit</Button
-                    >
-                    <Button
-                      variant="destructive"
-                      size="sm"
-                      @click="confirmDeleteTransaction(transaction.id)"
-                      class="ml-2"
-                      >Hapus</Button
-                    >
+                  <TableCell @click.stop>
+                    <DropdownMenu>
+                      <DropdownMenuTrigger as-child>
+                        <Button variant="ghost" class="h-8 w-8 p-0">
+                          <span class="sr-only">Open menu</span>
+                          <MoreHorizontal class="h-4 w-4" />
+                        </Button>
+                      </DropdownMenuTrigger>
+                      <DropdownMenuContent align="end">
+                        <DropdownMenuLabel>Aksi</DropdownMenuLabel>
+                        <DropdownMenuItem @click="showTransactionDetail(transaction)">
+                          <Info class="mr-2 h-4 w-4" />Detail
+                        </DropdownMenuItem>
+                        <DropdownMenuItem @click="editTransaction(transaction)">
+                          <Edit class="mr-2 h-4 w-4" />Edit
+                        </DropdownMenuItem>
+                      </DropdownMenuContent>
+                    </DropdownMenu>
                   </TableCell>
                 </TableRow>
-                <TableRow v-if="expandedTransactionId === transaction.id">
-                  <TableCell colspan="7" class="p-4 bg-gray-50 dark:bg-gray-700">
-                    <div class="space-y-2">
-                      <h3 class="font-semibold text-lg text-gray-900 dark:text-white">
-                        Detail Transaksi #{{ transaction.transaction_number }}
-                      </h3>
-                      <p class="text-sm text-gray-700 dark:text-gray-300">
-                        <strong>Metode Pembayaran:</strong>
-                        {{ transaction.payment_method }}
-                      </p>
-                      <p class="text-sm text-gray-700 dark:text-gray-300">
-                        <strong>Diskon:</strong>
-                        {{ formatCurrency(transaction.discount_amount) }}
-                      </p>
-                      <p class="text-sm text-gray-700 dark:text-gray-300">
-                        <strong>Pajak:</strong>
-                        {{ formatCurrency(transaction.tax_amount) }}
-                      </p>
-                      <p
-                        v-if="transaction.notes"
-                        class="text-sm text-gray-700 dark:text-gray-300"
-                      >
-                        <strong>Catatan:</strong> {{ transaction.notes }}
-                      </p>
-
-                      <h4
-                        class="font-semibold text-md text-gray-900 dark:text-white mt-4"
-                      >
-                        Item Transaksi:
-                      </h4>
-                      <Table class="w-full">
-                        <TableHeader>
-                          <TableRow>
-                            <TableHead>Produk</TableHead>
-                            <TableHead>Qty</TableHead>
-                            <TableHead>Harga Satuan</TableHead>
-                            <TableHead>Total</TableHead>
-                          </TableRow>
-                        </TableHeader>
-                        <TableBody>
-                          <TableRow v-for="item in transaction.items" :key="item.id">
-                            <TableCell>{{ item.product_name }}</TableCell>
-                            <TableCell>{{ item.quantity }}</TableCell>
-                            <TableCell>{{ formatCurrency(item.unit_price) }}</TableCell>
-                            <TableCell>{{ formatCurrency(item.total_price) }}</TableCell>
-                          </TableRow>
-                        </TableBody>
-                      </Table>
-                    </div>
+                <TableRow v-if="transactions.length === 0 && !loading">
+                  <TableCell colspan="7" class="text-center text-gray-500 dark:text-gray-400">
+                    Tidak ada transaksi ditemukan.
                   </TableCell>
                 </TableRow>
-              </template>
-            </template>
-            <TableRow v-else>
-              <TableCell colspan="7" class="text-center text-gray-500 dark:text-gray-400">
-                Tidak ada transaksi ditemukan.
-              </TableCell>
-            </TableRow>
-          </TableBody>
-        </Table>
-        <div v-if="loading" class="text-center text-gray-500 dark:text-gray-400 mt-4">
-          Memuat transaksi...
-        </div>
-        <div v-if="errorMessage" class="text-red-500 text-sm mt-4">
-          {{ errorMessage }}
-        </div>
-        <div v-if="successMessage" class="text-green-500 text-sm mt-4">
-          {{ successMessage }}
-        </div>
-      </div>
+              </TableBody>
+            </Table>
+          </div>
+          <div v-if="loading" class="text-center text-gray-500 dark:text-gray-400 mt-4">
+            Memuat transaksi...
+          </div>
+          <Toaster />
+        </CardContent>
+      </Card>
 
       <!-- Edit Transaction Dialog -->
       <Dialog :open="isTransactionFormOpen" @update:open="isTransactionFormOpen = $event">
@@ -218,38 +184,114 @@
                 placeholder="Catatan transaksi (opsional)"
               />
             </div>
-            <DialogFooter>
-              <Button type="submit" :disabled="loading">
+            <DialogFooter class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 pt-4">
+              <DialogClose as-child>
+                <Button type="button" variant="outline" @click="cancelEdit"
+                  class="w-full sm:w-auto mb-2 sm:mb-0"
+                  >Batal</Button
+                >
+              </DialogClose>
+              <Button type="submit" :disabled="loading" class="w-full sm:w-auto">
                 <span v-if="loading">Menyimpan...</span>
                 <span v-else>Perbarui Transaksi</span>
               </Button>
-              <DialogClose as-child>
-                <Button type="button" variant="outline" @click="cancelEdit">Batal</Button>
-              </DialogClose>
             </DialogFooter>
           </form>
         </DialogContent>
       </Dialog>
 
-      <!-- Delete Confirmation Dialog -->
-      <Dialog :open="isConfirmDeleteOpen" @update:open="isConfirmDeleteOpen = $event">
-        <DialogContent>
+      <!-- Transaction Detail Dialog -->
+      <Dialog :open="isTransactionDetailOpen" @update:open="isTransactionDetailOpen = $event">
+        <DialogContent class="sm:max-w-[600px] p-6 max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle>Konfirmasi Hapus Transaksi</DialogTitle>
-            <DialogDescription>
-              Apakah Anda yakin ingin menghapus transaksi ini? Tindakan ini tidak dapat
-              dibatalkan.
-            </DialogDescription>
+            <DialogTitle>Detail Transaksi</DialogTitle>
+            <DialogDescription>Informasi lengkap mengenai transaksi ini.</DialogDescription>
           </DialogHeader>
+          <div v-if="selectedTransaction" class="grid gap-4 py-4">
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailTransactionNumber" class="text-right">No. Transaksi</Label>
+              <Input id="detailTransactionNumber" :model-value="selectedTransaction.transaction_number" readonly class="col-span-3" />
+            </div>
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailCreatedAt" class="text-right">Tanggal</Label>
+              <Input id="detailCreatedAt" :model-value="formatDate(selectedTransaction.created_at)" readonly class="col-span-3" />
+            </div>
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailCashier" class="text-right">Kasir</Label>
+              <Input id="detailCashier" :model-value="selectedTransaction.cashier_name || 'N/A'" readonly class="col-span-3" />
+            </div>
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailCustomer" class="text-right">Pelanggan</Label>
+              <Input id="detailCustomer" :model-value="selectedTransaction.customer_name || 'Umum'" readonly class="col-span-3" />
+            </div>
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailTotalAmount" class="text-right">Total Awal</Label>
+              <Input id="detailTotalAmount" :model-value="formatCurrency(selectedTransaction.total_amount)" readonly class="col-span-3" />
+            </div>
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailDiscountAmount" class="text-right">Diskon</Label>
+              <Input id="detailDiscountAmount" :model-value="formatCurrency(selectedTransaction.discount_amount)" readonly class="col-span-3" />
+            </div>
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailTaxAmount" class="text-right">Pajak</Label>
+              <Input id="detailTaxAmount" :model-value="formatCurrency(selectedTransaction.tax_amount)" readonly class="col-span-3" />
+            </div>
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailFinalAmount" class="text-right">Total Akhir</Label>
+              <Input id="detailFinalAmount" :model-value="formatCurrency(selectedTransaction.final_amount)" readonly class="col-span-3" />
+            </div>
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailPaymentMethod" class="text-right">Metode Pembayaran</Label>
+              <Input id="detailPaymentMethod" :model-value="selectedTransaction.payment_method" readonly class="col-span-3" />
+            </div>
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailPaymentStatus" class="text-right">Status Pembayaran</Label>
+              <div class="col-span-3">
+                <Badge :variant="getStatusVariant(selectedTransaction.payment_status)">
+                  {{ selectedTransaction.payment_status }}
+                </Badge>
+              </div>
+            </div>
+            <div class="grid grid-cols-4 items-center gap-4">
+              <Label for="detailNotes" class="text-right">Catatan</Label>
+              <Textarea id="detailNotes" :model-value="selectedTransaction.notes || 'Tidak ada catatan'" readonly class="col-span-3" />
+            </div>
+
+            <h4 class="font-semibold text-md text-gray-900 dark:text-white mt-4">
+              Item Transaksi:
+            </h4>
+            <Table class="w-full">
+              <TableHeader>
+                <TableRow>
+                  <TableHead>Produk</TableHead>
+                  <TableHead>Qty</TableHead>
+                  <TableHead>Harga Satuan</TableHead>
+                  <TableHead>Total</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                <template v-if="selectedTransaction.items && selectedTransaction.items.length > 0">
+                  <TableRow v-for="item in selectedTransaction.items" :key="item.id">
+                    <TableCell>{{ item.product_name }}</TableCell>
+                    <TableCell>{{ item.quantity }}</TableCell>
+                    <TableCell>{{ formatCurrency(item.unit_price) }}</TableCell>
+                    <TableCell>{{ formatCurrency(item.total_price) }}</TableCell>
+                  </TableRow>
+                </template>
+                <TableRow v-else>
+                  <TableCell colspan="4" class="text-center text-gray-500 dark:text-gray-400">
+                    Tidak ada item transaksi.
+                  </TableCell>
+                </TableRow>
+              </TableBody>
+            </Table>
+          </div>
           <DialogFooter>
-            <Button variant="outline" @click="isConfirmDeleteOpen = false">Batal</Button>
-            <Button
-              variant="destructive"
-              @click="deleteTransactionConfirmed"
-              :disabled="loading"
-            >
-              <span v-if="loading">Menghapus...</span>
-              <span v-else>Hapus</span>
+            <DialogClose as-child>
+              <Button type="button" variant="outline">Tutup</Button>
+            </DialogClose>
+            <Button @click="editTransaction(selectedTransaction!)">
+              <Edit class="mr-2 h-4 w-4" />Edit Transaksi
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -264,6 +306,9 @@ definePageMeta({
 })
 import { ref, onMounted, computed, watch } from "vue";
 import { useSupabaseClient, useSupabaseUser } from "#imports";
+import { toast } from 'vue-sonner';
+import { Toaster } from '@/components/ui/sonner';
+import 'vue-sonner/style.css' // vue-sonner v2 requires this import
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -294,6 +339,14 @@ import {
   DialogTrigger,
   DialogClose,
 } from "@/components/ui/dialog";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuLabel,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { MoreHorizontal, Edit, Trash2, Info, Filter } from "lucide-vue-next";
 
 interface TransactionItem {
   id: string;
@@ -337,18 +390,17 @@ const pageLoading = ref(true);
 const transactions = ref<Transaction[]>([]);
 const cashiers = ref<CashierProfile[]>([]);
 const loading = ref(false);
-const errorMessage = ref("");
 const hasAccessRole = ref(false);
 const hasAdminOrManagerRole = ref(false);
 
 const searchQuery = ref("");
 const filterStatus = ref("all");
 const filterCashier = ref("all");
-const expandedTransactionId = ref<string | null>(null);
 const isTransactionFormOpen = ref(false);
-const isConfirmDeleteOpen = ref(false);
-const transactionToDeleteId = ref<string | null>(null);
-const successMessage = ref("");
+const isFilterDialogOpen = ref(false); // New ref for filter dialog
+const isTransactionDetailOpen = ref(false); // New ref for transaction detail dialog
+const selectedTransaction = ref<Transaction | null>(null); // Stores the selected transaction for detail view
+const isEditing = ref(false); // New ref for edit mode
 
 const transactionForm = ref<Transaction>({
   id: "",
@@ -371,7 +423,6 @@ const transactionForm = ref<Transaction>({
 
 const fetchTransactions = async () => {
   loading.value = true;
-  errorMessage.value = "";
   try {
     let query = supabase
       .from("transactions")
@@ -400,10 +451,6 @@ const fetchTransactions = async () => {
       query = query.ilike("transaction_number", `%${searchQuery.value}%`);
     }
 
-    if (searchQuery.value) {
-      query = query.ilike("transaction_number", `%${searchQuery.value}%`);
-    }
-
     const { data, error } = await query;
 
     if (error) throw error;
@@ -416,7 +463,9 @@ const fetchTransactions = async () => {
       customers: undefined, // Remove nested customers object
     })) as Transaction[];
   } catch (error: any) {
-    errorMessage.value = error.message;
+    toast.error("Gagal memuat transaksi!", {
+      description: error.message,
+    });
   } finally {
     loading.value = false;
   }
@@ -461,15 +510,17 @@ const checkUserRole = async () => {
   hasAdminOrManagerRole.value = data.role === "admin" || data.role === "manager";
 
   if (!hasAccessRole.value) {
-    errorMessage.value = "Anda tidak memiliki izin untuk mengakses halaman ini.";
+    toast.warning("Anda tidak memiliki izin untuk mengakses halaman ini.", {
+      description: "Silakan hubungi administrator untuk mendapatkan akses.",
+    });
   }
 };
 
 const editTransaction = (transaction: Transaction) => {
+  isEditing.value = true;
   transactionForm.value = { ...transaction };
-  errorMessage.value = "";
-  successMessage.value = "";
-  isTransactionFormOpen.value = true;
+  isTransactionFormOpen.value = true; // Open the dialog for editing
+  isTransactionDetailOpen.value = false; // Close detail dialog if open
 };
 
 const cancelEdit = () => {
@@ -479,8 +530,6 @@ const cancelEdit = () => {
 
 const saveTransaction = async () => {
   loading.value = true;
-  errorMessage.value = "";
-  successMessage.value = "";
 
   try {
     const { error } = await supabase
@@ -493,46 +542,23 @@ const saveTransaction = async () => {
       .eq("id", transactionForm.value.id);
 
     if (error) throw error;
-    successMessage.value = "Transaksi berhasil diperbarui!";
+    toast.success("Transaksi berhasil diperbarui!", {
+      description: `Transaksi ${transactionForm.value.transaction_number} telah berhasil diperbarui.`,
+    });
     resetForm();
     await fetchTransactions();
     isTransactionFormOpen.value = false;
   } catch (error: any) {
-    errorMessage.value = error.message;
-  } finally {
-    loading.value = false;
-  }
-};
-
-const confirmDeleteTransaction = (id: string) => {
-  transactionToDeleteId.value = id;
-  isConfirmDeleteOpen.value = true;
-};
-
-const deleteTransactionConfirmed = async () => {
-  if (!transactionToDeleteId.value) return;
-
-  loading.value = true;
-  errorMessage.value = "";
-  successMessage.value = "";
-  try {
-    const { error } = await supabase
-      .from("transactions")
-      .delete()
-      .eq("id", transactionToDeleteId.value);
-    if (error) throw error;
-    successMessage.value = "Transaksi berhasil dihapus!";
-    await fetchTransactions();
-    isConfirmDeleteOpen.value = false;
-    transactionToDeleteId.value = null;
-  } catch (error: any) {
-    errorMessage.value = error.message;
+    toast.error("Gagal memperbarui transaksi!", {
+      description: error.message,
+    });
   } finally {
     loading.value = false;
   }
 };
 
 const resetForm = () => {
+  isEditing.value = false; // Reset isEditing when form is reset
   transactionForm.value = {
     id: "",
     transaction_number: "",
@@ -553,44 +579,43 @@ const resetForm = () => {
   };
 };
 
-const viewTransactionDetails = async (transaction: Transaction) => {
-  if (expandedTransactionId.value === transaction.id) {
-    expandedTransactionId.value = null; // Collapse if already expanded
-    return;
-  }
+const showTransactionDetail = async (transaction: Transaction) => {
+  selectedTransaction.value = { ...transaction }; // Copy to avoid direct mutation
+  isTransactionDetailOpen.value = true;
 
-  loading.value = true;
-  errorMessage.value = "";
-  try {
-    const { data, error } = await supabase
-      .from("transaction_items")
-      .select(
+  // Fetch transaction items if not already fetched
+  if (!selectedTransaction.value.items || selectedTransaction.value.items.length === 0) {
+    loading.value = true;
+    try {
+      const { data, error } = await supabase
+        .from("transaction_items")
+        .select(
+          `
+          *,
+          products!transaction_items_product_id_fkey(name)
         `
-        *,
-        products!transaction_items_product_id_fkey(name)
-      `
-      )
-      .eq("transaction_id", transaction.id)
-      .order("created_at", { ascending: true });
+        )
+        .eq("transaction_id", transaction.id)
+        .order("created_at", { ascending: true });
 
-    if (error) throw error;
+      if (error) throw error;
 
-    const items = data.map((item: any) => ({
-      ...item,
-      product_name: item.products?.name || "Produk Tidak Ditemukan",
-      products: undefined,
-    })) as TransactionItem[];
+      const items = data.map((item: any) => ({
+        ...item,
+        product_name: item.products?.name || "Produk Tidak Ditemukan",
+        products: undefined,
+      })) as TransactionItem[];
 
-    // Find the transaction in the main array and update its items
-    const index = transactions.value.findIndex((t) => t.id === transaction.id);
-    if (index !== -1) {
-      transactions.value[index].items = items;
+      if (selectedTransaction.value) {
+        selectedTransaction.value.items = items;
+      }
+    } catch (error: any) {
+      toast.error("Gagal memuat detail item transaksi!", {
+        description: error.message,
+      });
+    } finally {
+      loading.value = false;
     }
-    expandedTransactionId.value = transaction.id;
-  } catch (error: any) {
-    errorMessage.value = "Gagal memuat detail item: " + error.message;
-  } finally {
-    loading.value = false;
   }
 };
 
@@ -637,9 +662,10 @@ onMounted(async () => {
       await fetchCashiers(); // Fetch cashiers only if admin/manager
       await fetchTransactions();
     }
-  } catch (error) {
-    console.error("Error during initial data fetch:", error);
-    errorMessage.value = "Gagal memuat data. Silakan coba lagi.";
+  } catch (error: any) {
+    toast.error("Terjadi kesalahan saat memuat data awal!", {
+      description: error.message,
+    });
   } finally {
     pageLoading.value = false;
   }
