@@ -7,10 +7,19 @@
       <div class="flex items-center">
         <button
           @click="isSidebarOpen = !isSidebarOpen"
-          class="p-2 mr-4 text-gray-900 dark:text-white lg:hidden focus:outline-none focus:bg-blue-600 rounded-md"
+          :class="[
+            'p-2 mr-4 text-gray-900 dark:text-white lg:hidden focus:outline-none rounded-md transition-all duration-200',
+            isSidebarOpen
+              ? 'bg-gray-200 dark:bg-gray-800 shadow-lg ring-2 ring-gray-400 dark:ring-gray-600 scale-110'
+              : 'hover:bg-gray-100 dark:hover:bg-gray-800'
+          ]"
           aria-label="Toggle sidebar"
         >
-          <Icon name="lucide:menu" class="w-6 h-6" />
+          <Icon
+            name="lucide:menu"
+            class="w-6 h-6 transition-transform duration-200"
+            :style="{ transform: isSidebarOpen ? 'rotate(90deg)' : 'rotate(0deg)' }"
+          />
         </button>
         <h2 class="text-xl font-bold text-gray-900 dark:text-white">
           Welcome, {{ userProfile?.full_name || "User" }}!
@@ -60,163 +69,165 @@
       <!-- Sidebar -->
       <aside
         :class="isSidebarOpen ? 'translate-x-0' : '-translate-x-full'"
-        class="fixed w-70 bg-white dark:bg-gray-950 flex flex-col z-40 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static"
+        class="fixed inset-y-0 left-0 h-screen w-64 max-w-xs bg-white dark:bg-gray-950 flex flex-col z-40 transition-transform duration-300 ease-in-out lg:translate-x-0 lg:static lg:w-70 lg:relative lg:flex-shrink-0"
       >
-        <nav class="flex-1 p-4 space-y-3 overflow-y-auto">
-          <NuxtLink
-            to="/"
-            class="flex items-center p-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-md"
-            active-class="bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 scale-100 shadow-lg"
-          >
-            <Icon name="lucide:home" class="w-5 h-5 mr-3" />
-            Dashboard
-          </NuxtLink>
-          <NuxtLink
-            v-if="userProfile?.role === 'admin' || userProfile?.role === 'manager'"
-            to="/products"
-            class="flex items-center p-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-md"
-            active-class="bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 scale-100 shadow-lg"
-          >
-            <Icon name="lucide:package" class="w-5 h-5 mr-3" />
-            Products
-          </NuxtLink>
-          <NuxtLink
-            v-if="userProfile?.role === 'admin' || userProfile?.role === 'manager'"
-            to="/categories"
-            class="flex items-center p-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-md"
-            active-class="bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 scale-100 shadow-lg"
-          >
-            <Icon name="lucide:tag" class="w-5 h-5 mr-3" />
-            Categories
-          </NuxtLink>
-          <NuxtLink
-            v-if="userProfile?.role === 'admin' || userProfile?.role === 'manager'"
-            to="/customers"
-            class="flex items-center p-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-md"
-            active-class="bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 scale-100 shadow-lg"
-          >
-            <Icon name="lucide:users" class="w-5 h-5 mr-3" />
-            Customers
-          </NuxtLink>
-          <NuxtLink
-            v-if="userProfile?.role === 'admin' || userProfile?.role === 'manager' || userProfile?.role === 'cashier'"
-            to="/transactions"
-            class="flex items-center p-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-md"
-            active-class="bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 scale-100 shadow-lg"
-          >
-            <Icon name="lucide:receipt" class="w-5 h-5 mr-3" />
-            Transactions
-          </NuxtLink>
-          <NuxtLink
-            v-if="userProfile?.role === 'admin' || userProfile?.role === 'manager' || userProfile?.role === 'cashier'"
-            to="/cashier"
-            class="flex items-center p-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-md"
-            active-class="bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 scale-100 shadow-lg"
-          >
-            <Icon name="lucide:shopping-cart" class="w-5 h-5 mr-3" />
-            Cashier
-          </NuxtLink>
-          <NuxtLink
-            v-if="userProfile?.role === 'admin' || userProfile?.role === 'manager'"
-            to="/employee-shifts"
-            class="flex items-center p-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-md"
-            active-class="bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 scale-100 shadow-lg"
-          >
-            <Icon name="lucide:briefcase" class="w-5 h-5 mr-3" />
-            Employee Shifts
-          </NuxtLink>
-          <NuxtLink
-            v-if="userProfile?.role === 'admin' || userProfile?.role === 'manager'"
-            to="/shifts"
-            class="flex items-center p-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-md"
-            active-class="bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 scale-100 shadow-lg"
-          >
-            <Icon name="lucide:clock" class="w-5 h-5 mr-3" />
-            Shifts
-          </NuxtLink>
-          <NuxtLink
-            to="/attendance"
-            class="flex items-center p-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-md"
-            active-class="bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 scale-100 shadow-lg"
-          >
-            <Icon name="lucide:calendar-check" class="w-5 h-5 mr-3" />
-            Attendance
-          </NuxtLink>
-          <div
-            v-if="userProfile?.role === 'admin' || userProfile?.role === 'manager'"
-            class="flex flex-col gap-2 pt-4 mt-4 border-t border-gray-200 dark:border-gray-700"
-          >
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">
-              Reports
-            </h2>
+        <div class="flex flex-col h-full">
+          <nav class="p-4 space-y-3 overflow-y-auto grow">
             <NuxtLink
-              to="/reports/sales"
+              to="/"
               class="flex items-center p-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-md"
               active-class="bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 scale-100 shadow-lg"
             >
-              <Icon name="lucide:bar-chart-2" class="w-5 h-5 mr-3" />
-              Sales Report
+              <Icon name="lucide:home" class="w-5 h-5 mr-3" />
+              Dashboard
             </NuxtLink>
             <NuxtLink
-              to="/reports/products"
+              v-if="userProfile?.role === 'admin' || userProfile?.role === 'manager'"
+              to="/products"
               class="flex items-center p-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-md"
               active-class="bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 scale-100 shadow-lg"
             >
-              <Icon name="lucide:box" class="w-5 h-5 mr-3" />
-              Product Report
+              <Icon name="lucide:package" class="w-5 h-5 mr-3" />
+              Products
             </NuxtLink>
             <NuxtLink
-              to="/reports/attendance"
+              v-if="userProfile?.role === 'admin' || userProfile?.role === 'manager'"
+              to="/categories"
               class="flex items-center p-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-md"
               active-class="bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 scale-100 shadow-lg"
             >
-              <Icon name="lucide:clipboard-check" class="w-5 h-5 mr-3" />
-              Attendance Report
+              <Icon name="lucide:tag" class="w-5 h-5 mr-3" />
+              Categories
             </NuxtLink>
-          </div>
-          <!-- Admin Links -->
-          <div
-            v-if="userProfile?.role === 'admin'"
-            class="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700"
-          >
-            <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Admin</h2>
             <NuxtLink
-              to="/admin/employees"
+              v-if="userProfile?.role === 'admin' || userProfile?.role === 'manager'"
+              to="/customers"
               class="flex items-center p-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-md"
               active-class="bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 scale-100 shadow-lg"
             >
-              <Icon name="lucide:users-round" class="w-5 h-5 mr-3" />
-              Employee Management
+              <Icon name="lucide:users" class="w-5 h-5 mr-3" />
+              Customers
             </NuxtLink>
-          </div>
-        </nav>
-        <div class="p-4 border-t border-gray-200 dark:border-gray-700">
-          <Dialog>
-            <DialogTrigger as-child>
-              <Button
-                variant="destructive"
-                class="w-full flex items-center justify-center p-3 rounded-lg transition-colors duration-200 font-medium"
+            <NuxtLink
+              v-if="userProfile?.role === 'admin' || userProfile?.role === 'manager' || userProfile?.role === 'cashier'"
+              to="/transactions"
+              class="flex items-center p-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-md"
+              active-class="bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 scale-100 shadow-lg"
+            >
+              <Icon name="lucide:receipt" class="w-5 h-5 mr-3" />
+              Transactions
+            </NuxtLink>
+            <NuxtLink
+              v-if="userProfile?.role === 'admin' || userProfile?.role === 'manager' || userProfile?.role === 'cashier'"
+              to="/cashier"
+              class="flex items-center p-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-md"
+              active-class="bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 scale-100 shadow-lg"
+            >
+              <Icon name="lucide:shopping-cart" class="w-5 h-5 mr-3" />
+              Cashier
+            </NuxtLink>
+            <NuxtLink
+              v-if="userProfile?.role === 'admin' || userProfile?.role === 'manager'"
+              to="/employee-shifts"
+              class="flex items-center p-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-md"
+              active-class="bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 scale-100 shadow-lg"
+            >
+              <Icon name="lucide:briefcase" class="w-5 h-5 mr-3" />
+              Employee Shifts
+            </NuxtLink>
+            <NuxtLink
+              v-if="userProfile?.role === 'admin' || userProfile?.role === 'manager'"
+              to="/shifts"
+              class="flex items-center p-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-md"
+              active-class="bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 scale-100 shadow-lg"
+            >
+              <Icon name="lucide:clock" class="w-5 h-5 mr-3" />
+              Shifts
+            </NuxtLink>
+            <NuxtLink
+              to="/attendance"
+              class="flex items-center p-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-md"
+              active-class="bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 scale-100 shadow-lg"
+            >
+              <Icon name="lucide:calendar-check" class="w-5 h-5 mr-3" />
+              Attendance
+            </NuxtLink>
+            <div
+              v-if="userProfile?.role === 'admin' || userProfile?.role === 'manager'"
+              class="flex flex-col gap-2 pt-4 mt-4 border-t border-gray-200 dark:border-gray-700"
+            >
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">
+                Reports
+              </h2>
+              <NuxtLink
+                to="/reports/sales"
+                class="flex items-center p-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-md"
+                active-class="bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 scale-100 shadow-lg"
               >
-                <Icon name="lucide:log-out" class="w-5 h-5 mr-3" />
-                Logout
-              </Button>
-            </DialogTrigger>
-            <DialogContent>
-              <DialogHeader>
-                <DialogTitle>Confirm Logout</DialogTitle>
-                <DialogDescription>
-                  Are you sure you want to log out? You will be redirected to the login
-                  page.
-                </DialogDescription>
-              </DialogHeader>
-              <DialogFooter>
-                <DialogClose as-child>
-                  <Button variant="outline"> Cancel </Button>
-                </DialogClose>
-                <Button variant="destructive" @click="logout"> Logout </Button>
-              </DialogFooter>
-            </DialogContent>
-          </Dialog>
+                <Icon name="lucide:bar-chart-2" class="w-5 h-5 mr-3" />
+                Sales Report
+              </NuxtLink>
+              <NuxtLink
+                to="/reports/products"
+                class="flex items-center p-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-md"
+                active-class="bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 scale-100 shadow-lg"
+              >
+                <Icon name="lucide:box" class="w-5 h-5 mr-3" />
+                Product Report
+              </NuxtLink>
+              <NuxtLink
+                to="/reports/attendance"
+                class="flex items-center p-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-md"
+                active-class="bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 scale-100 shadow-lg"
+              >
+                <Icon name="lucide:clipboard-check" class="w-5 h-5 mr-3" />
+                Attendance Report
+              </NuxtLink>
+            </div>
+            <!-- Admin Links -->
+            <div
+              v-if="userProfile?.role === 'admin'"
+              class="pt-4 mt-4 border-t border-gray-200 dark:border-gray-700"
+            >
+              <h2 class="text-lg font-semibold text-gray-900 dark:text-white mb-3">Admin</h2>
+              <NuxtLink
+                to="/admin/employees"
+                class="flex items-center p-3 text-gray-900 dark:text-white hover:bg-gray-100 dark:hover:bg-gray-800 rounded-lg transition-all duration-200 ease-in-out transform hover:scale-105 hover:shadow-md"
+                active-class="bg-gray-200 text-gray-900 dark:bg-gray-800 dark:text-white hover:text-gray-900 dark:hover:text-white hover:bg-gray-200 dark:hover:bg-gray-800 scale-100 shadow-lg"
+              >
+                <Icon name="lucide:users-round" class="w-5 h-5 mr-3" />
+                Employee Management
+              </NuxtLink>
+            </div>
+          </nav>
+          <div class="p-4 border-t border-gray-200 dark:border-gray-700 mt-4 mb-4 lg:mb-20">
+            <Dialog>
+              <DialogTrigger as-child>
+                <Button
+                  variant="destructive"
+                  class="w-full flex items-center justify-center p-3 rounded-lg transition-colors duration-200 font-medium"
+                >
+                  <Icon name="lucide:log-out" class="w-5 h-5 mr-3" />
+                  Logout
+                </Button>
+              </DialogTrigger>
+              <DialogContent>
+                <DialogHeader>
+                  <DialogTitle>Confirm Logout</DialogTitle>
+                  <DialogDescription>
+                    Are you sure you want to log out? You will be redirected to the login
+                    page.
+                  </DialogDescription>
+                </DialogHeader>
+                <DialogFooter>
+                  <DialogClose as-child>
+                    <Button variant="outline"> Cancel </Button>
+                  </DialogClose>
+                  <Button variant="destructive" @click="logout"> Logout </Button>
+                </DialogFooter>
+              </DialogContent>
+            </Dialog>
+          </div>
         </div>
       </aside>
 
@@ -227,8 +238,8 @@
           <slot />
         </div>
       </main>
-  </div>
     </div>
+  </div>
 </template>
 
 <script setup lang="ts">

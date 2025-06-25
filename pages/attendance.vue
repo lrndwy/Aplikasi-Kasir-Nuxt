@@ -95,10 +95,19 @@
           <CardDescription>Lakukan check-in dan check-out dengan foto selfie</CardDescription>
         </CardHeader>
         <CardContent>
+          <div v-if="hasActiveShiftToday" class="mb-4">
+            <p>
+              <b>Shift Hari Ini:</b>
+              {{ employeeShifts[0].shifts.name }} ({{ employeeShifts[0].shifts.start_time }} - {{ employeeShifts[0].shifts.end_time }})
+            </p>
+          </div>
+          <div v-else class="mb-4 p-4 bg-yellow-100 text-yellow-800 rounded">
+            Anda tidak memiliki jadwal shift aktif hari ini. Silakan hubungi admin/manager untuk penjadwalan shift.
+          </div>
           <div class="flex flex-col sm:flex-row gap-4">
             <Button
               @click="openCamera('check_in')"
-              :disabled="loadingAttendance || !!todayAttendance"
+              :disabled="loadingAttendance || !!todayAttendance || !hasActiveShiftToday"
               class="flex-1 text-lg py-3"
               size="xl"
             >
@@ -108,7 +117,7 @@
             </Button>
             <Button
               @click="openCamera('check_out')"
-              :disabled="loadingAttendance || !todayAttendance?.check_in || !!todayAttendance?.check_out"
+              :disabled="loadingAttendance || !todayAttendance?.check_in || !!todayAttendance?.check_out || !hasActiveShiftToday"
               class="flex-1 text-lg py-3"
               size="xl"
               variant="secondary"
@@ -119,7 +128,7 @@
             </Button>
             <Button
               @click="openOtherAttendanceModal"
-              :disabled="loadingAttendance || !!todayAttendance"
+              :disabled="loadingAttendance || !!todayAttendance || !hasActiveShiftToday"
               class="flex-1 text-lg py-3"
               size="xl"
               variant="outline"
@@ -847,6 +856,10 @@ const confirmHalfDayCheckout = async () => {
 
 const handleAttendanceAction = async (actionType: 'check_in' | 'check_out') => {
   if (!user.value) return;
+  if (!hasActiveShiftToday.value) {
+    toast.error("Anda tidak memiliki jadwal shift aktif hari ini.");
+    return;
+  }
 
   loadingAttendance.value = true;
   attendanceMessage.value = "";
@@ -935,6 +948,10 @@ const handleAttendanceAction = async (actionType: 'check_in' | 'check_out') => {
 
 const handleOtherAttendanceSubmission = async () => {
   if (!user.value) return;
+  if (!hasActiveShiftToday.value) {
+    toast.error("Anda tidak memiliki jadwal shift aktif hari ini.");
+    return;
+  }
 
   loadingAttendance.value = true;
   attendanceMessage.value = "";
@@ -1056,6 +1073,10 @@ const openPhotoUrl = (url: string | null) => {
     window.open(url, '_blank');
   }
 };
+
+const hasActiveShiftToday = computed(() => {
+  return employeeShifts.value.length > 0;
+});
 
 onMounted(async () => {
   pageLoading.value = true; // Start loading

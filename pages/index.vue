@@ -68,6 +68,9 @@
             <div v-if="loadingAttendance" class="flex justify-center items-center h-24">
               <p class="text-gray-500 dark:text-gray-400">Memuat status absensi...</p>
             </div>
+            <div v-else-if="!hasActiveShiftToday && !loadingAttendance" class="text-center p-4">
+              <p class="text-yellow-800 bg-yellow-100 rounded p-2">Anda tidak memiliki jadwal shift aktif hari ini. Silakan hubungi admin/manager untuk penjadwalan shift.</p>
+            </div>
             <div v-else-if="todayAttendance" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
               <Card>
                 <CardHeader class="pb-2">
@@ -295,7 +298,7 @@
 definePageMeta({
   title: 'Dashboard - Aplikasi Kasir'
 })
-import { ref, onMounted, watch } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import { useRouter } from "vue-router";
 import { useSupabaseClient, useSupabaseUser } from "#imports";
 import { Button } from "@/components/ui/button";
@@ -349,6 +352,10 @@ interface Attendance {
 
 const todayAttendance = ref<Attendance | null>(null);
 const loadingAttendance = ref(false);
+const employeeShifts = ref<any[]>([]);
+const hasActiveShiftToday = computed(() => {
+  return employeeShifts.value.length > 0;
+});
 
 const fetchUserProfile = async (userId: string) => {
   const { data, error } = await supabase
@@ -440,12 +447,41 @@ const getStatusVariant = (
   }
 };
 
+const fetchEmployeeShiftsForUser = async () => {
+  if (!user.value) return;
+  try {
+    const today = new Date();
+    const dayOfWeek = today.getDay(); // 0 for Sunday, 1 for Monday, etc.
+    const { data, error } = await supabase
+      .from("employee_shifts")
+      .select(
+        `*, shifts!employee_shifts_shift_id_fkey(name, start_time, end_time, total_work_hours)`
+      )
+      .eq("employee_id", user.value.id)
+      .eq("day_of_week", dayOfWeek)
+      .eq("is_active", true)
+      .single();
+    if (error && error.code !== "PGRST116") {
+      throw error;
+    }
+    if (data) {
+      employeeShifts.value = [data];
+    } else {
+      employeeShifts.value = [];
+    }
+  } catch (error: any) {
+    employeeShifts.value = [];
+    // Optional: tampilkan toast error jika perlu
+  }
+};
+
 onMounted(async () => {
   if (!user.value) {
     router.push("/login");
     return;
   }
   await fetchUserProfile(user.value.id);
+  await fetchEmployeeShiftsForUser();
   await fetchTodayAttendance(); // Fetch attendance on mount
 });
 
@@ -453,6 +489,7 @@ onMounted(async () => {
 watch(user, async (newUser) => {
   if (newUser) {
     await fetchUserProfile(newUser.id);
+    await fetchEmployeeShiftsForUser();
     await fetchTodayAttendance(); // Fetch attendance when user changes
   } else {
     userProfile.value = null;
@@ -493,24 +530,6 @@ const updateProfile = async () => {
     loadingUpdate.value = false;
   }
 };
-
-onMounted(async () => {
-  if (!user.value) {
-    router.push("/login");
-    return;
-  }
-  await fetchUserProfile(user.value.id);
-});
-
-// Watch for user changes (e.g., after login/logout)
-watch(user, async (newUser) => {
-  if (newUser) {
-    await fetchUserProfile(newUser.id);
-  } else {
-    userProfile.value = null;
-    router.push("/login");
-  }
-});
 </script>
 
 <style scoped>

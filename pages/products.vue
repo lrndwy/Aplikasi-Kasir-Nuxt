@@ -16,7 +16,12 @@
     </div>
 
     <div v-else>
-      <div class="mb-6 flex justify-end">
+      <div class="mb-6 flex flex-col sm:flex-row justify-end sm:items-center gap-4">
+        <Input
+          v-model="searchQuery"
+          placeholder="Cari produk..."
+          class="w-full sm:max-w-xs bg-white dark:bg-gray-950"
+        />
         <Dialog :open="isProductFormOpen" @update:open="isProductFormOpen = $event">
           <DialogTrigger as-child>
             <Button @click="addNewProduct">Tambah Produk Baru</Button>
@@ -190,92 +195,188 @@
         </Dialog>
       </div>
 
-      <!-- Daftar Produk -->
-        <h2 class="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4 text-gray-900 dark:text-white">
-          Daftar Produk
-        </h2>
-        <div
-          v-if="products.length === 0 && !loading"
-          class="text-center text-gray-500 dark:text-gray-400 py-8 bg-white dark:bg-gray-800 shadow-md rounded-lg p-4 sm:p-6"
-        >
-          Tidak ada produk ditemukan.
-        </div>
-        <div v-else class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
-          <Card
-            v-for="product in products"
-            :key="product.id"
-            class="flex cursor-pointer flex-col overflow-hidden rounded-lg border bg-white shadow-sm transition-all hover:shadow-lg dark:border-gray-700 dark:bg-gray-800"
-            @click="editProduct(product)"
-          >
-            <div class="relative">
-              <img
-                v-if="product.image_url"
-                :src="product.image_url"
-                alt="Product Image"
-                class="aspect-square w-full object-cover -mt-10"
-              />
-              <div
-                v-else
-                class="flex aspect-square w-full items-center justify-center bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
-              >
-                No Image
-              </div>
-              <div class="absolute right-2 -top-3 flex items-center space-x-2">
-                <Badge
-                  :class="product.is_active ? ' text-white' : 'bg-red-500 text-white'"
-                  class="text-xs"
-                >
-                  {{ product.is_active ? "Aktif" : "Tidak Aktif" }}
-                </Badge>
-              </div>
-            </div>
-            <div class="p-4">
-              <h3 class="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
-                {{ product.name }}
-              </h3>
-              <p class="mb-2 text-sm text-gray-600 dark:text-gray-300">
-                {{ product.description || "Tidak ada deskripsi." }}
-              </p>
-              <div class="mb-2 flex items-center justify-between text-sm">
-                <span class="text-gray-700 dark:text-gray-300">
-                  Kategori:
-                  <span class="font-medium">{{
-                    categories.find((c) => c.id === product.category_id)?.name || "N/A"
-                  }}</span>
-                </span>
-                <Badge variant="outline" class="text-gray-700 dark:text-gray-300">
-                  SKU: {{ product.sku || "N/A" }}
-                </Badge>
-              </div>
-              <div class="mb-3 flex items-center justify-between text-sm">
-                <span class="text-gray-700 dark:text-gray-300">
-                  Stok:
-                  <span class="font-medium">{{ product.stock }}</span>
-                </span>
-                <span
-                  :class="{
-                    'text-red-500': product.stock <= product.min_stock,
-                    'text-orange-500':
-                      product.stock > product.min_stock && product.stock < 10,
-                    'text-green-500': product.stock >= 10,
-                  }"
-                  class="font-medium"
-                >
-                  {{
-                    product.stock <= product.min_stock
-                      ? "Stok Rendah!"
-                      : product.stock < 10
-                        ? "Stok Sedang"
-                        : "Stok Aman"
-                  }}
-                </span>
-              </div>
-              <p class="text-xl font-bold text-green-600 dark:text-green-400">
-                {{ formatCurrency(product.price) }}
-              </p>
-            </div>
-          </Card>
-        </div>
+     <!-- Daftar Produk per Kategori -->
+     <div v-if="categories.length === 0 && !loading" class="text-center text-gray-500 dark:text-gray-400 py-8 bg-white dark:bg-gray-800 shadow-md rounded-lg p-4 sm:p-6">
+       Tidak ada kategori ditemukan.
+     </div>
+     <div v-else>
+       <div v-for="category in categories" :key="category.id" class="mb-8">
+         <h2 class="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4 text-gray-900 dark:text-white">
+           {{ category.name }}
+         </h2>
+         <div
+           v-if="getProductsByCategory(category.id).length === 0 && !loading"
+           class="text-center text-gray-500 dark:text-gray-400 py-4 bg-white dark:bg-gray-800 shadow-md rounded-lg p-4 sm:p-6"
+         >
+           Tidak ada produk dalam kategori ini.
+         </div>
+         <div v-else class="flex overflow-x-auto space-x-4 pb-4 -mx-2 px-2 custom-scrollbar">
+           <Card
+             v-for="product in getProductsByCategory(category.id)"
+             :key="product.id"
+             class="flex-none w-64 cursor-pointer flex-col overflow-hidden rounded-lg border bg-white shadow-sm transition-all hover:shadow-lg dark:border-gray-700 dark:bg-gray-800"
+             @click="editProduct(product)"
+           >
+             <div class="relative">
+               <img
+                 v-if="product.image_url"
+                 :src="product.image_url"
+                 alt="Product Image"
+                 class="aspect-square w-full object-cover -mt-10"
+               />
+               <div
+                 v-else
+                 class="flex aspect-square w-full items-center justify-center bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+               >
+                 No Image
+               </div>
+               <div class="absolute right-2 -top-3 flex items-center space-x-2">
+                 <Badge
+                   :class="product.is_active ? ' text-white' : 'bg-red-500 text-white'"
+                   class="text-xs"
+                 >
+                   {{ product.is_active ? "Aktif" : "Tidak Aktif" }}
+                 </Badge>
+               </div>
+             </div>
+             <div class="p-4">
+               <h3 class="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
+                 {{ product.name }}
+               </h3>
+               <p class="mb-2 text-sm text-gray-600 dark:text-gray-300">
+                 {{ product.description || "Tidak ada deskripsi." }}
+               </p>
+               <div class="mb-2 flex items-center justify-between text-sm">
+                 <span class="text-gray-700 dark:text-gray-300">
+                   Kategori:
+                   <span class="font-medium">{{
+                     categories.find((c) => c.id === product.category_id)?.name || "N/A"
+                   }}</span>
+                 </span>
+                 <Badge variant="outline" class="text-gray-700 dark:text-gray-300">
+                   SKU: {{ product.sku || "N/A" }}
+                 </Badge>
+               </div>
+               <div class="mb-3 flex items-center justify-between text-sm">
+                 <span class="text-gray-700 dark:text-gray-300">
+                   Stok:
+                   <span class="font-medium">{{ product.stock }}</span>
+                 </span>
+                 <span
+                   :class="{
+                     'text-red-500': product.stock <= product.min_stock,
+                     'text-orange-500':
+                       product.stock > product.min_stock && product.stock < 10,
+                     'text-green-500': product.stock >= 10,
+                   }"
+                   class="font-medium"
+                 >
+                   {{
+                     product.stock <= product.min_stock
+                       ? "Stok Rendah!"
+                       : product.stock < 10
+                         ? "Stok Sedang"
+                         : "Stok Aman"
+                   }}
+                 </span>
+               </div>
+               <p class="text-xl font-bold text-green-600 dark:text-green-400">
+                 {{ formatCurrency(product.price) }}
+               </p>
+             </div>
+           </Card>
+         </div>
+       </div>
+
+       <!-- Uncategorized Products -->
+       <div class="mb-8">
+         <h2 class="text-xl sm:text-2xl font-semibold mb-3 sm:mb-4 text-gray-900 dark:text-white">
+           Produk Tanpa Kategori
+         </h2>
+         <div
+           v-if="getUncategorizedProducts().length === 0 && !loading"
+           class="text-center text-gray-500 dark:text-gray-400 py-4 bg-white dark:bg-gray-800 shadow-md rounded-lg p-4 sm:p-6"
+         >
+           Tidak ada produk tanpa kategori.
+         </div>
+         <div v-else class="flex overflow-x-auto space-x-4 pb-4 -mx-2 px-2 custom-scrollbar">
+           <Card
+             v-for="product in getUncategorizedProducts()"
+             :key="product.id"
+             class="flex-none w-64 cursor-pointer flex-col overflow-hidden rounded-lg border bg-white shadow-sm transition-all hover:shadow-lg dark:border-gray-700 dark:bg-gray-800"
+             @click="editProduct(product)"
+           >
+             <div class="relative">
+               <img
+                 v-if="product.image_url"
+                 :src="product.image_url"
+                 alt="Product Image"
+                 class="aspect-square w-full object-cover -mt-10"
+               />
+               <div
+                 v-else
+                 class="flex aspect-square w-full items-center justify-center bg-gray-200 text-gray-500 dark:bg-gray-700 dark:text-gray-400"
+               >
+                 No Image
+               </div>
+               <div class="absolute right-2 -top-3 flex items-center space-x-2">
+                 <Badge
+                   :class="product.is_active ? ' text-white' : 'bg-red-500 text-white'"
+                   class="text-xs"
+                 >
+                   {{ product.is_active ? "Aktif" : "Tidak Aktif" }}
+                 </Badge>
+               </div>
+             </div>
+             <div class="p-4">
+               <h3 class="mb-1 text-lg font-semibold text-gray-900 dark:text-white">
+                 {{ product.name }}
+               </h3>
+               <p class="mb-2 text-sm text-gray-600 dark:text-gray-300">
+                 {{ product.description || "Tidak ada deskripsi." }}
+               </p>
+               <div class="mb-2 flex items-center justify-between text-sm">
+                 <span class="text-gray-700 dark:text-gray-300">
+                   Kategori:
+                   <span class="font-medium">{{
+                     categories.find((c) => c.id === product.category_id)?.name || "N/A"
+                   }}</span>
+                 </span>
+                 <Badge variant="outline" class="text-gray-700 dark:text-gray-300">
+                   SKU: {{ product.sku || "N/A" }}
+                 </Badge>
+               </div>
+               <div class="mb-3 flex items-center justify-between text-sm">
+                 <span class="text-gray-700 dark:text-gray-300">
+                   Stok:
+                   <span class="font-medium">{{ product.stock }}</span>
+                 </span>
+                 <span
+                   :class="{
+                     'text-red-500': product.stock <= product.min_stock,
+                     'text-orange-500':
+                       product.stock > product.min_stock && product.stock < 10,
+                     'text-green-500': product.stock >= 10,
+                   }"
+                   class="font-medium"
+                 >
+                   {{
+                     product.stock <= product.min_stock
+                       ? "Stok Rendah!"
+                       : product.stock < 10
+                         ? "Stok Sedang"
+                         : "Stok Aman"
+                   }}
+                 </span>
+               </div>
+               <p class="text-xl font-bold text-green-600 dark:text-green-400">
+                 {{ formatCurrency(product.price) }}
+               </p>
+             </div>
+           </Card>
+         </div>
+       </div>
+     </div>
 
       <!-- Delete Confirmation Dialog -->
       <Dialog :open="isConfirmDeleteOpen" @update:open="isConfirmDeleteOpen = $event">
@@ -309,7 +410,7 @@
 definePageMeta({
   title: 'Produk - Aplikasi Kasir'
 })
-import { ref, onMounted } from "vue";
+import { ref, onMounted, watch, computed } from "vue";
 import { useSupabaseClient, useSupabaseUser } from "#imports";
 import { toast } from 'vue-sonner';
 import { Toaster } from '@/components/ui/sonner';
@@ -408,14 +509,18 @@ const fileInputRef = ref<HTMLInputElement | null>(null);
 const isProductFormOpen = ref(false); // Controls the add/edit product dialog
 const isConfirmDeleteOpen = ref(false); // Controls the delete confirmation dialog
 const productToDeleteId = ref<string | null>(null); // Stores the ID of the product to be deleted
+const searchQuery = ref(""); // New ref for search query
 
 const fetchProducts = async () => {
   loading.value = true;
   try {
-    const { data, error } = await supabase
-      .from("products")
-      .select("*")
-      .order("name", { ascending: true });
+    let query = supabase.from("products").select("*");
+
+    if (searchQuery.value) {
+      query = query.ilike("name", `%${searchQuery.value}%`);
+    }
+
+    const { data, error } = await query.order("name", { ascending: true });
 
     if (error) throw error;
     products.value = data as Product[];
@@ -669,6 +774,27 @@ const formatDate = (dateString: string) => {
   return new Date(dateString).toLocaleDateString("id-ID", options);
 };
 
+const filteredProducts = computed(() => {
+  if (!searchQuery.value) {
+    return products.value;
+  }
+  const lowerCaseSearchQuery = searchQuery.value.toLowerCase();
+  return products.value.filter(
+    (product) =>
+      product.name.toLowerCase().includes(lowerCaseSearchQuery) ||
+      product.sku?.toLowerCase().includes(lowerCaseSearchQuery) ||
+      product.barcode?.toLowerCase().includes(lowerCaseSearchQuery)
+  );
+});
+
+const getProductsByCategory = (categoryId: string) => {
+  return filteredProducts.value.filter(product => product.category_id === categoryId);
+};
+
+const getUncategorizedProducts = () => {
+  return filteredProducts.value.filter(product => !product.category_id);
+};
+
 onMounted(async () => {
   pageLoading.value = true; // Start loading state
   try {
@@ -699,6 +825,11 @@ watch(user, async (newUser) => {
     categories.value = [];
   }
 });
+
+watch(searchQuery, () => {
+  // No need to refetch from Supabase, as filtering is now done client-side
+  // This watch is primarily to trigger re-evaluation of computed properties
+});
 </script>
 
 <style scoped>
@@ -718,5 +849,23 @@ watch(user, async (newUser) => {
   100% {
     transform: rotate(360deg);
   }
+}
+
+.custom-scrollbar::-webkit-scrollbar {
+  height: 8px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-track {
+  background: #f1f1f1;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb {
+  background: #888;
+  border-radius: 10px;
+}
+
+.custom-scrollbar::-webkit-scrollbar-thumb:hover {
+  background: #555;
 }
 </style>

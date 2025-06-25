@@ -59,7 +59,7 @@
                 </div>
               </div>
               <div class="flex items-center space-x-2">
-                <Checkbox id="shiftIsActive" v-model:checked="shiftForm.is_active" />
+                <Checkbox id="shiftIsActive" v-model="shiftForm.is_active" />
                 <Label for="shiftIsActive">Aktif</Label>
               </div>
               <DialogFooter class="flex flex-col-reverse sm:flex-row sm:justify-end sm:space-x-2 pt-4">

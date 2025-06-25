@@ -70,6 +70,40 @@
                     </SelectContent>
                   </Select>
                 </div>
+                <div>
+                  <Label for="startDate" class="mb-2">Tanggal Mulai</Label>
+                  <Popover>
+                    <PopoverTrigger as-child class="hover:bg-white">
+                      <Button
+                        variant="outline"
+                        :class="cn('w-full justify-start text-left font-normal', !startDateValue && 'text-muted-foreground')"
+                      >
+                        <CalendarIcon class="mr-2 h-4 w-4" />
+                        {{ startDateValue ? df.format(startDateValue.toDate(getLocalTimeZone())) : 'Pilih tanggal' }}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent class="w-auto p-0">
+                      <Calendar v-model="startDateValue" initial-focus />
+                    </PopoverContent>
+                  </Popover>
+                </div>
+                <div>
+                  <Label for="endDate" class="mb-2">Tanggal Akhir</Label>
+                  <Popover>
+                    <PopoverTrigger as-child class="hover:bg-white">
+                      <Button
+                        variant="outline"
+                        :class="cn('w-full justify-start text-left font-normal', !endDateValue && 'text-muted-foreground')"
+                      >
+                        <CalendarIcon class="mr-2 h-4 w-4" />
+                        {{ endDateValue ? df.format(endDateValue.toDate(getLocalTimeZone())) : 'Pilih tanggal' }}
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent class="w-auto p-0">
+                      <Calendar v-model="endDateValue" initial-focus />
+                    </PopoverContent>
+                  </Popover>
+                </div>
               </div>
               <DialogFooter>
                 <Button type="button" variant="outline" @click="isFilterDialogOpen = false">Tutup</Button>
@@ -139,6 +173,37 @@
           </div>
           <div v-if="loading" class="text-center text-gray-500 dark:text-gray-400 mt-4">
             Memuat transaksi...
+          </div>
+          <div class="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2 mt-4">
+            <div class="flex items-center gap-2">
+              <Label for="pageSizeSelect">Tampilkan</Label>
+              <Select v-model="pageSize" id="pageSizeSelect" @update:modelValue="currentPage = 1">
+                <SelectTrigger class="w-20">
+                  <SelectValue :placeholder="String(pageSize)" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem :value="10">10</SelectItem>
+                  <SelectItem :value="20">20</SelectItem>
+                  <SelectItem :value="50">50</SelectItem>
+                  <SelectItem :value="100">100</SelectItem>
+                </SelectContent>
+              </Select>
+              <span>data per halaman</span>
+            </div>
+            <div class="flex justify-between gap-2 items-center w-full sm:w-auto mt-2 sm:mt-0">
+              <div>
+                Menampilkan {{ (currentPage-1)*pageSize+1 }} - {{ Math.min(currentPage*pageSize, totalCount) }} dari {{ totalCount }} transaksi
+              </div>
+              <div class="flex gap-2 items-center justify-between">
+                <Button :disabled="currentPage === 1 || loading" @click="currentPage--">
+                  <ChevronLeft class="h-4 w-4" />
+                </Button>
+                <span>Halaman {{ currentPage }} dari {{ totalPages }}</span>
+                <Button :disabled="currentPage === totalPages || loading" @click="currentPage++">
+                  <ChevronRight class="h-4 w-4" />
+                </Button>
+              </div>
+            </div>
           </div>
           <Toaster />
         </CardContent>
@@ -347,6 +412,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import { MoreHorizontal, Edit, Trash2, Info, Filter } from "lucide-vue-next";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover';
+import { Calendar } from '@/components/ui/calendar';
+import { CalendarIcon, ChevronLeft, ChevronRight } from 'lucide-vue-next';
+import {
+  DateFormatter,
+  type DateValue,
+  getLocalTimeZone,
+} from '@internationalized/date';
+import { cn } from '@/lib/utils';
 
 interface TransactionItem {
   id: string;
@@ -421,51 +499,67 @@ const transactionForm = ref<Transaction>({
   items: [],
 });
 
+const df = new DateFormatter('id-ID', { dateStyle: 'long' });
+const startDateValue = ref<DateValue>();
+const endDateValue = ref<DateValue>();
+
+const currentPage = ref(1);
+const pageSize = ref(10);
+const totalPages = ref(1);
+const totalCount = ref(0);
+
 const fetchTransactions = async () => {
   loading.value = true;
   try {
     let query = supabase
-      .from("transactions")
+      .from('transactions')
       .select(
-        `
-        *,
+        `*,
         profiles!transactions_cashier_id_fkey(full_name),
-        customers!transactions_customer_id_fkey(name)
-      `
+        customers!transactions_customer_id_fkey(name)`,
+        { count: 'exact' }
       )
-      .order("created_at", { ascending: false });
+      .order('created_at', { ascending: false });
 
     if (!hasAdminOrManagerRole.value && user.value) {
-      // If not admin/manager, only fetch their own transactions
-      query = query.eq("cashier_id", user.value.id);
-    } else if (filterCashier.value !== "all") {
-      // If admin/manager and a specific cashier is selected
-      query = query.eq("cashier_id", filterCashier.value);
+      query = query.eq('cashier_id', user.value.id);
+    } else if (filterCashier.value !== 'all') {
+      query = query.eq('cashier_id', filterCashier.value);
     }
-
-    if (filterStatus.value !== "all") {
-      query = query.eq("payment_status", filterStatus.value);
+    if (filterStatus.value !== 'all') {
+      query = query.eq('payment_status', filterStatus.value);
     }
-
     if (searchQuery.value) {
-      query = query.ilike("transaction_number", `%${searchQuery.value}%`);
+      query = query.ilike('transaction_number', `%${searchQuery.value}%`);
     }
+    // Filter tanggal
+    if (startDateValue.value) {
+      query = query.gte('created_at', startDateValue.value.toDate(getLocalTimeZone()).toISOString());
+    }
+    if (endDateValue.value) {
+      // Supabase .lt eksklusif, jadi tambahkan 1 hari
+      const end = endDateValue.value.toDate(getLocalTimeZone());
+      end.setDate(end.getDate() + 1);
+      query = query.lt('created_at', end.toISOString());
+    }
+    // Paginasi
+    const from = (currentPage.value - 1) * pageSize.value;
+    const to = from + pageSize.value - 1;
+    query = query.range(from, to);
 
-    const { data, error } = await query;
-
+    const { data, error, count } = await query;
     if (error) throw error;
-
     transactions.value = data.map((t: any) => ({
       ...t,
-      cashier_name: t.profiles?.full_name || "N/A",
-      customer_name: t.customers?.name || "Umum",
-      profiles: undefined, // Remove nested profiles object
-      customers: undefined, // Remove nested customers object
+      cashier_name: t.profiles?.full_name || 'N/A',
+      customer_name: t.customers?.name || 'Umum',
+      profiles: undefined,
+      customers: undefined,
     })) as Transaction[];
+    totalCount.value = count || 0;
+    totalPages.value = Math.max(1, Math.ceil(totalCount.value / pageSize.value));
   } catch (error: any) {
-    toast.error("Gagal memuat transaksi!", {
-      description: error.message,
-    });
+    toast.error('Gagal memuat transaksi!', { description: error.message });
   } finally {
     loading.value = false;
   }
@@ -671,7 +765,15 @@ onMounted(async () => {
   }
 });
 
-watch([user, filterStatus, filterCashier, searchQuery], async ([newUser]) => {
+watch([
+  user,
+  filterStatus,
+  filterCashier,
+  searchQuery,
+  startDateValue,
+  endDateValue,
+  currentPage,
+], async ([newUser]) => {
   if (newUser) {
     await checkUserRole();
     if (hasAccessRole.value) {
@@ -685,6 +787,8 @@ watch([user, filterStatus, filterCashier, searchQuery], async ([newUser]) => {
     cashiers.value = [];
   }
 });
+
+watch(pageSize, () => { currentPage.value = 1; });
 </script>
 
 <style scoped>
